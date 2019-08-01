@@ -1,0 +1,53 @@
+{
+  "Proxy": "http://127.0.0.1:8080",
+  "Devices": [
+    {
+      "IMEI": "123456789012345",
+      "Name": "Rabbit-CMCC",
+      "PushAddrs": [
+        {
+          "URL": "https://api.telegram.org/bot[Token]/sendMessage",
+          "Body": "chat_id=[ChatID]&text={.Tittle}%0a{.Content}"
+        },
+        {
+          "URL": "https://sc.ftqq.com/[Token].send",
+          "Body": "text={.Tittle}&desp={.Content}"
+        }
+      ]
+    },
+    {
+      "IMEI": "123456789012346",
+      "Name": "Rabbit-CT",
+      "PushAddrs": [
+        {
+          "URL": "https://api.telegram.org/bot[Token]/sendMessage",
+          "Body": "chat_id=[ChatID]&text={.Tittle}%0a{.Content}"
+        },
+        {
+          "URL": "https://sc.ftqq.com/[Token].send",
+          "Body": "text={.Tittle}&desp={.Content}"
+        }
+      ]
+    },
+    {
+      "IMEI": "123456789012347",
+      "Name": "Rabbit-CU",
+      "PushAddrs": [
+        {
+          "URL": "https://api.telegram.org/bot[Token]/sendMessage",
+          "Body": "chat_id=[ChatID]&text={.Tittle}%0a{.Content}"
+        }
+      ]
+    },
+    {
+      "IMEI": "123456789012348",
+      "Name": "Rabbit-SoftBank",
+      "PushAddrs": [
+        {
+          "URL": "https://api.telegram.org/bot[Token]/sendMessage",
+          "Body": "chat_id=[ChatID]&text={.Tittle}%0a{.Content}"
+        }
+      ]
+    }
+  ]
+}
