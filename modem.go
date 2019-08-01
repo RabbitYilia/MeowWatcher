@@ -21,19 +21,19 @@ func UpdateDeviceInfo(Device *Device) {
 func InitDevice(configuration *Config) {
 	for i := 1; i <= 100; i++ {
 		c := make(chan string, 1)
-		SerialConfig := &serial.Config{Name: "COM" + strconv.Itoa(i), Baud: 115200, ReadTimeout: 5 /*毫秒*/}
 		go func() {
+			log.Println("[", "Detecting", "]", "COM"+strconv.Itoa(i))
+			SerialConfig := &serial.Config{Name: "COM" + strconv.Itoa(i), Baud: 115200, ReadTimeout: 5 /*毫秒*/}
 			Handler, err := serial.OpenPort(SerialConfig)
 			if err != nil {
 				c <- ""
 				return
 			}
-			log.Println("[", "Detecting", "]", "COM"+strconv.Itoa(i))
-			c <- SendCommandLow(Handler, "ATE1")
+			SendCommandLow(Handler, "ATE1")
 			IMEI := SendCommandLow(Handler, "AT+CGSN")
 			if IMEI != "" {
 				Resp := DetectedPortType(Handler)
-				for DeviceNum, _ := range configuration.Devices {
+				for DeviceNum := range configuration.Devices {
 					if configuration.Devices[DeviceNum].IMEI == IMEI {
 						if Resp != "" {
 							configuration.Devices[DeviceNum].FeedbackPort = "COM" + strconv.Itoa(i)
@@ -45,27 +45,29 @@ func InitDevice(configuration *Config) {
 							configuration.Devices[DeviceNum].ManagerPortConfig = SerialConfig
 							configuration.Devices[DeviceNum].ManagerPortHandler = Handler
 							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "Manager Working on", "COM"+strconv.Itoa(i))
-
 						}
 					}
 				}
+				c <- IMEI
 			} else {
 				Handler.Close()
+				c <- ""
 			}
 		}()
 		select {
 		case result := <-c:
 			if result == "" {
+				log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Offline")
 				continue
 			}
 			log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Online")
-		case <-time.After(5 * time.Second):
+		case <-time.After(10 * time.Second):
 			log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Offline")
 			continue
 		}
 	}
 
-	for DeviceNum, _ := range configuration.Devices {
+	for DeviceNum := range configuration.Devices {
 		if configuration.Devices[DeviceNum].ManagerPort == "" {
 			continue
 		}
@@ -76,7 +78,9 @@ func InitDevice(configuration *Config) {
 		configuration.Devices[DeviceNum].Model = SendCommand(&configuration.Devices[DeviceNum], "AT+CGMM")
 		configuration.Devices[DeviceNum].HWVersion = SendCommand(&configuration.Devices[DeviceNum], "AT+CGMR")
 		configuration.Devices[DeviceNum].PhoneNumber = SendCommand(&configuration.Devices[DeviceNum], "AT+CNUM")
-		configuration.Devices[DeviceNum].PhoneNumber = strings.Replace(strings.Split(configuration.Devices[DeviceNum].PhoneNumber, ",")[1], "\"", "", -1)
+		if configuration.Devices[DeviceNum].PhoneNumber != "" {
+			configuration.Devices[DeviceNum].PhoneNumber = strings.Replace(strings.Split(configuration.Devices[DeviceNum].PhoneNumber, ",")[1], "\"", "", -1)
+		}
 		TECharSet := SendCommand(&configuration.Devices[DeviceNum], "AT+CSCS=?")
 		if strings.Contains(TECharSet, "UCS2") {
 			SendCommand(&configuration.Devices[DeviceNum], "AT+CSCS=\"UCS2\"")

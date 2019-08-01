@@ -13,9 +13,18 @@ import (
 func CheckSMS(Configure *Config, Device *Device) {
 	SMSStatus := SendCommand(Device, "AT+CPMS?")
 	if strings.Split(SMSStatus, ",")[1] != "0" {
-		SMSResponse := SendCommand(Device, "AT+CMGR=0")
-		PDU := strings.Split(SMSResponse, "\r\n")[1]
-		PDUData, err := hex.DecodeString(PDU)
+		sum := 0
+		for {
+			SMSResponse := SendCommand(Device, "AT+CMGR="+strconv.Itoa(sum))
+			if !strings.Contains(SMSResponse, "+CMGR:") {
+				sum++
+			} else {
+				break
+			}
+		}
+		SMSResponse := SendCommand(Device, "AT+CMGR="+strconv.Itoa(sum))
+		PDU := strings.Split(SMSResponse, "\r\n")
+		PDUData, err := hex.DecodeString(PDU[1])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -28,13 +37,13 @@ func CheckSMS(Configure *Config, Device *Device) {
 		Tittle := From + "->" + To
 		Data := "From:" + From + "\r\n" + "To:" + To + "\r\n" + "Send:" + SendTime + "\r\n" + "Received:" + ReceiveTime + "\r\n" + msg.Text
 		log.Println("[", Device.Name, "]", "New SMS:", Tittle, " ", msg.Text)
-		for PushNum, _ := range Device.PushAddrs {
+		for PushNum := range Device.PushAddrs {
 			PushContent := strings.Replace(Device.PushAddrs[PushNum].Body, "{.Tittle}", url.QueryEscape(Tittle), -1)
 			PushContent = strings.Replace(PushContent, "{.Content}", url.QueryEscape(Data), -1)
 			PushByPost(Configure.client, Device.PushAddrs[PushNum].URL, PushContent)
 		}
-		log.Println("[", Device.Name, "]", "Delete Last SMS")
-		SendCommand(Device, "AT+CMGD=0")
+		log.Println("[", Device.Name, "]", "Delete No", sum, " SMS")
+		SendCommand(Device, "AT+CMGD="+strconv.Itoa(sum))
 	} else {
 		log.Println("[", Device.Name, "]", "No SMS Received")
 	}

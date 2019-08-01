@@ -56,7 +56,7 @@ func main() {
 	InitDevice(&configuration)
 	log.Println(configuration)
 	for {
-		for DeviceNum, _ := range configuration.Devices {
+		for DeviceNum := range configuration.Devices {
 			if configuration.Devices[DeviceNum].ManagerPort == "" {
 				continue
 			}
@@ -65,6 +65,7 @@ func main() {
 			if configuration.Devices[DeviceNum].FeedbackPort == "" {
 				continue
 			}
+			SendCommandLow(configuration.Devices[DeviceNum].FeedbackPortHandler, "ATE")
 			ProcessFeedBack(&configuration.Devices[DeviceNum], GetFeedback(&configuration.Devices[DeviceNum], 5))
 		}
 
