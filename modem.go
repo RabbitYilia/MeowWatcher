@@ -179,7 +179,7 @@ func DetectedPortType(Handler io.ReadWriteCloser) string {
 		if sum != 0 {
 			break
 		}
-		if time.Now().Unix()-start > 5 {
+		if time.Now().Unix()-start > 6 {
 			break
 		}
 	}

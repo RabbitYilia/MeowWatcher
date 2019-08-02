@@ -69,5 +69,5 @@ func ProcessPDUTimestamp(data []byte) string {
 		log.Fatal()
 	}
 	Zone = strconv.Itoa(ZoneInt / 4)
-	return "+" + Zone + " 20" + Year + "-" + Month + "-" + Day + " " + Hour + ":" + Minute + ":" + Sec
+	return "UTC+" + Zone + " 20" + Year + "-" + Month + "-" + Day + " " + Hour + ":" + Minute + ":" + Sec
 }
