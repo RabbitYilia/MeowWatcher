@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/tarm/goserial"
+	serialx "go.bug.st/serial.v1"
 )
 
 func UpdateDeviceInfo(Device *Device) {
@@ -19,11 +19,16 @@ func UpdateDeviceInfo(Device *Device) {
 }
 
 func InitDevice(configuration *Config) {
-	for i := 1; i <= 100; i++ {
+	ports, err := serialx.GetPortsList()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, port := range ports {
 		c := make(chan string, 1)
 		go func() {
-			log.Println("[", "Detecting", "]", "COM"+strconv.Itoa(i))
-			SerialConfig := &serial.Config{Name: "COM" + strconv.Itoa(i), Baud: 115200, ReadTimeout: 5 /*毫秒*/}
+			log.Println("[", "Detecting", "]", port)
+			SerialConfig := &serial.Config{Name: port, Baud: 115200, ReadTimeout: 5 /*毫秒*/}
 			Handler, err := serial.OpenPort(SerialConfig)
 			if err != nil {
 				c <- ""
@@ -36,15 +41,15 @@ func InitDevice(configuration *Config) {
 				for DeviceNum := range configuration.Devices {
 					if configuration.Devices[DeviceNum].IMEI == IMEI {
 						if Resp != "" {
-							configuration.Devices[DeviceNum].DiagnosePort = "COM" + strconv.Itoa(i)
+							configuration.Devices[DeviceNum].DiagnosePort = port
 							configuration.Devices[DeviceNum].DiagnosePortConfig = SerialConfig
 							configuration.Devices[DeviceNum].DiagnosePortHandler = Handler
-							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "DiagnosePort Working on", "COM"+strconv.Itoa(i))
+							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "DiagnosePort Working on", port)
 						} else {
-							configuration.Devices[DeviceNum].ATPort = "COM" + strconv.Itoa(i)
+							configuration.Devices[DeviceNum].ATPort = port
 							configuration.Devices[DeviceNum].ATPortConfig = SerialConfig
 							configuration.Devices[DeviceNum].ATPortHandler = Handler
-							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "ATPort Working on", "COM"+strconv.Itoa(i))
+							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "ATPort Working on", port)
 						}
 					}
 				}
@@ -57,12 +62,12 @@ func InitDevice(configuration *Config) {
 		select {
 		case result := <-c:
 			if result == "" {
-				log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Offline")
+				log.Println("[", "Detect", "]", port, "Offline")
 				continue
 			}
-			log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Online")
+			log.Println("[", "Detect", "]", port, "Online")
 		case <-time.After(10 * time.Second):
-			log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Offline")
+			log.Println("[", "Detect", "]", port, "Offline")
 			continue
 		}
 	}
