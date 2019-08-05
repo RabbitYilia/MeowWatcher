@@ -23,9 +23,11 @@ type Device struct {
 	ManufactureIdentification string
 	SignalQuality             string
 	Provider                  string
-	Status                    string
+	Status                    bool
 	HWVersion                 string
 	PhoneNumber               string
+	VoicePort                 string
+	Romaning                  bool
 	DiagnosePortConfig        *serial.Config
 	ATPortConfig              *serial.Config
 	ATPortHandler             io.ReadWriteCloser

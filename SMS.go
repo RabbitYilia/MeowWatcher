@@ -11,6 +11,7 @@ import (
 )
 
 func CheckSMS(Configure *Config, Device *Device) {
+	SendCommand(Device, "AT+CPMS= \"ME\",\"ME\",\"ME\"")
 	SMSStatus := SendCommand(Device, "AT+CPMS?")
 	if strings.Split(SMSStatus, ",")[1] != "0" {
 		sum := 0
