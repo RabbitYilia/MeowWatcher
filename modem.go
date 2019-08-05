@@ -37,15 +37,16 @@ func InitDevice(configuration *Config) {
 	}
 	for i := 1; i <= 100; i++ {
 		c := make(chan string, 1)
+		var DeviceTypeID int
+		var HardwareIdentity string
 		go func() {
-			log.Println("[", "Detecting", "]", "COM"+strconv.Itoa(i))
+			//log.Println("[", "Detecting", "]", "COM"+strconv.Itoa(i))
 			SerialConfig := &serial.Config{Name: "COM" + strconv.Itoa(i), Baud: 115200, ReadTimeout: 5 /*毫秒*/}
 			Handler, err := serial.OpenPort(SerialConfig)
 			if err != nil {
 				c <- ""
 				return
 			}
-			var DeviceTypeID int
 			for _, thisport := range usbports {
 				if !thisport.IsUSB {
 					c <- ""
@@ -54,6 +55,7 @@ func InitDevice(configuration *Config) {
 				if thisport.Name == "COM"+strconv.Itoa(i) {
 					args := strings.Split(thisport.DeviceID, "&")
 					DeviceTypeID, err = strconv.Atoi(args[len(args)-1])
+					HardwareIdentity = args[len(args)-3]
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -80,6 +82,9 @@ func InitDevice(configuration *Config) {
 							configuration.Devices[DeviceNum].ATPortHandler = Handler
 							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "ATPort Working on", "COM"+strconv.Itoa(i))
 						}
+						if HardwareIdentity != "" {
+							configuration.Devices[DeviceNum].HWIdentity = HardwareIdentity
+						}
 					}
 				}
 				c <- IMEI
@@ -91,16 +96,29 @@ func InitDevice(configuration *Config) {
 		select {
 		case result := <-c:
 			if result == "" {
-				log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Offline")
+				//log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Offline")
 				continue
 			}
 			log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Online")
 		case <-time.After(6 * time.Second):
-			log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Offline")
+			//log.Println("[", "Detect", "]", "COM"+strconv.Itoa(i), "Offline")
 			continue
 		}
 	}
-
+	for DeviceNum := range configuration.Devices {
+		for _, thisport := range usbports {
+			if !thisport.IsUSB {
+				continue
+			}
+			args := strings.Split(thisport.DeviceID, "&")
+			HardwareIdentity := args[len(args)-3]
+			if configuration.Devices[DeviceNum].HWIdentity == HardwareIdentity {
+				configuration.Devices[DeviceNum].VoicePort = thisport.Name
+				log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, " Voice Port is ", thisport.Name)
+				break
+			}
+		}
+	}
 	for DeviceNum := range configuration.Devices {
 		if configuration.Devices[DeviceNum].ATPort == "" {
 			continue

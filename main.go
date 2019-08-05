@@ -17,6 +17,7 @@ type Device struct {
 	PushAddrs                 []PushAddr
 	DiagnosePort              string
 	ATPort                    string
+	VoicePort                 string
 	IMEI                      string
 	IMSI                      string
 	Model                     string
@@ -24,9 +25,9 @@ type Device struct {
 	SignalQuality             string
 	Provider                  string
 	Status                    bool
+	HWIdentity                string
 	HWVersion                 string
 	PhoneNumber               string
-	VoicePort                 string
 	Romaning                  bool
 	DiagnosePortConfig        *serial.Config
 	ATPortConfig              *serial.Config
@@ -57,6 +58,7 @@ func main() {
 	SetProxy(&configuration)
 	InitDevice(&configuration)
 	log.Println(configuration)
+
 	for {
 		for DeviceNum := range configuration.Devices {
 			if configuration.Devices[DeviceNum].ATPort == "" {
