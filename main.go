@@ -15,8 +15,8 @@ type Device struct {
 	Name                      string
 	User                      string
 	PushAddrs                 []PushAddr
-	FeedbackPort              string
-	ManagerPort               string
+	DiagnosePort              string
+	ATPort                    string
 	IMEI                      string
 	IMSI                      string
 	Model                     string
@@ -26,10 +26,10 @@ type Device struct {
 	Status                    string
 	HWVersion                 string
 	PhoneNumber               string
-	FeedbackPortConfig        *serial.Config
-	ManagerPortConfig         *serial.Config
-	ManagerPortHandler        io.ReadWriteCloser
-	FeedbackPortHandler       io.ReadWriteCloser
+	DiagnosePortConfig        *serial.Config
+	ATPortConfig              *serial.Config
+	ATPortHandler             io.ReadWriteCloser
+	DiagnosePortHandler       io.ReadWriteCloser
 }
 
 type Config struct {
@@ -57,15 +57,15 @@ func main() {
 	log.Println(configuration)
 	for {
 		for DeviceNum := range configuration.Devices {
-			if configuration.Devices[DeviceNum].ManagerPort == "" {
+			if configuration.Devices[DeviceNum].ATPort == "" {
 				continue
 			}
 			UpdateDeviceInfo(&configuration.Devices[DeviceNum])
 			CheckSMS(&configuration, &configuration.Devices[DeviceNum])
-			if configuration.Devices[DeviceNum].FeedbackPort == "" {
+			if configuration.Devices[DeviceNum].DiagnosePort == "" {
 				continue
 			}
-			SendCommandLow(configuration.Devices[DeviceNum].FeedbackPortHandler, "ATE")
+			SendCommandLow(configuration.Devices[DeviceNum].DiagnosePortHandler, "ATE")
 			ProcessFeedBack(&configuration.Devices[DeviceNum], GetFeedback(&configuration.Devices[DeviceNum], 5))
 		}
 

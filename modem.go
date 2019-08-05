@@ -36,15 +36,15 @@ func InitDevice(configuration *Config) {
 				for DeviceNum := range configuration.Devices {
 					if configuration.Devices[DeviceNum].IMEI == IMEI {
 						if Resp != "" {
-							configuration.Devices[DeviceNum].FeedbackPort = "COM" + strconv.Itoa(i)
-							configuration.Devices[DeviceNum].FeedbackPortConfig = SerialConfig
-							configuration.Devices[DeviceNum].FeedbackPortHandler = Handler
-							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "FeedBack Working on", "COM"+strconv.Itoa(i))
+							configuration.Devices[DeviceNum].DiagnosePort = "COM" + strconv.Itoa(i)
+							configuration.Devices[DeviceNum].DiagnosePortConfig = SerialConfig
+							configuration.Devices[DeviceNum].DiagnosePortHandler = Handler
+							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "DiagnosePort Working on", "COM"+strconv.Itoa(i))
 						} else {
-							configuration.Devices[DeviceNum].ManagerPort = "COM" + strconv.Itoa(i)
-							configuration.Devices[DeviceNum].ManagerPortConfig = SerialConfig
-							configuration.Devices[DeviceNum].ManagerPortHandler = Handler
-							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "Manager Working on", "COM"+strconv.Itoa(i))
+							configuration.Devices[DeviceNum].ATPort = "COM" + strconv.Itoa(i)
+							configuration.Devices[DeviceNum].ATPortConfig = SerialConfig
+							configuration.Devices[DeviceNum].ATPortHandler = Handler
+							log.Println("[", "Detect", "]", configuration.Devices[DeviceNum].Name, "ATPort Working on", "COM"+strconv.Itoa(i))
 						}
 					}
 				}
@@ -68,7 +68,7 @@ func InitDevice(configuration *Config) {
 	}
 
 	for DeviceNum := range configuration.Devices {
-		if configuration.Devices[DeviceNum].ManagerPort == "" {
+		if configuration.Devices[DeviceNum].ATPort == "" {
 			continue
 		}
 		SendCommand(&configuration.Devices[DeviceNum], "ATE1")
@@ -96,14 +96,14 @@ func InitDevice(configuration *Config) {
 func GetFeedback(Device *Device, ReadTime int64) string {
 	buffer := make([]byte, MAXRWLEN)
 	//发命令之前清空缓冲区
-	num, err := Device.FeedbackPortHandler.Read(buffer)
+	num, err := Device.DiagnosePortHandler.Read(buffer)
 	if err != nil {
 		log.Fatal(err)
 	}
 	StrBuffer := ""
 	start := time.Now().Unix()
 	for i := 0; i < 128000; i++ {
-		num, err = Device.FeedbackPortHandler.Read(buffer)
+		num, err = Device.DiagnosePortHandler.Read(buffer)
 		if num > 0 {
 			StrBuffer += fmt.Sprintf("%s", string(buffer[:num]))
 		}
@@ -130,17 +130,17 @@ func ProcessFeedBack(Device *Device, FeedBacks string) {
 func SendCommand(Device *Device, Command string) string {
 	buffer := make([]byte, MAXRWLEN)
 	//发命令之前清空缓冲区
-	num, err := Device.ManagerPortHandler.Read(buffer)
+	num, err := Device.ATPortHandler.Read(buffer)
 	if err != nil {
 		log.Fatal(err)
 	}
-	num, err = Device.ManagerPortHandler.Write([]byte(Command + "\r\n"))
+	num, err = Device.ATPortHandler.Write([]byte(Command + "\r\n"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	StrBuffer := ""
 	for i := 0; i < 128000; i++ {
-		num, err = Device.ManagerPortHandler.Read(buffer)
+		num, err = Device.ATPortHandler.Read(buffer)
 		if num > 0 {
 			StrBuffer += fmt.Sprintf("%s", string(buffer[:num]))
 		}
