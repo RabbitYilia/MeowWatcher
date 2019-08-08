@@ -19,14 +19,25 @@ func SetProxy(config *Config) {
 }
 
 func PushByPost(client *http.Client, URL string, Content string) {
-	req, err := http.NewRequest("POST", URL, strings.NewReader(Content))
-	if err != nil {
-		log.Fatal(err)
+	count := 0
+	for {
+		count++
+		if count > 15 {
+			log.Fatal("Push Failed.")
+		}
+		req, err := http.NewRequest("POST", URL, strings.NewReader(Content))
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println(err)
+			continue
+		} else {
+			defer resp.Body.Close()
+			break
+		}
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
 }
