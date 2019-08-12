@@ -67,6 +67,7 @@ func InitDevice(configuration *Config) {
 				return
 			}
 			SendCommandLow(Handler, "ATE1")
+			SendCommandLow(Handler, "AT^SYSCFG=2,2,3FFFFFFF,2,4")
 			IMEI := SendCommandLow(Handler, "AT+CGSN")
 			if IMEI != "" {
 				for DeviceNum := range configuration.Devices {
