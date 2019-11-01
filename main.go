@@ -3,75 +3,68 @@ package main
 import (
 	"encoding/json"
 	"github.com/tarm/goserial"
-	"io"
 	"log"
-	"net/http"
 	"os"
+	"strconv"
+	"time"
 )
 
-const MAXRWLEN = 128000
-
-type Device struct {
-	Name                      string
-	User                      string
-	PushAddrs                 []PushAddr
-	DiagnosePort              string
-	ATPort                    string
-	VoicePort                 string
-	IMEI                      string
-	IMSI                      string
-	Model                     string
-	ManufactureIdentification string
-	SignalQuality             string
-	Provider                  string
-	Status                    bool
-	HWIdentity                string
-	HWVersion                 string
-	PhoneNumber               string
-	Romaning                  bool
-	DiagnosePortConfig        *serial.Config
-	ATPortConfig              *serial.Config
-	ATPortHandler             io.ReadWriteCloser
-	DiagnosePortHandler       io.ReadWriteCloser
-}
-
-type Config struct {
-	Devices []Device
-	Proxy   string
-	client  *http.Client
-}
-type PushAddr struct {
-	URL  string
-	Body string
-}
+var configuration Config
 
 func main() {
 	file, _ := os.Open("conf.json")
-	defer file.Close()
 	decoder := json.NewDecoder(file)
-	configuration := Config{}
+	configuration = Config{}
 	err := decoder.Decode(&configuration)
 	if err != nil {
 		log.Fatal(err)
 	}
+	file.Close()
 
 	SetProxy(&configuration)
-	InitDevice(&configuration)
-	log.Println(configuration)
-
 	for {
+		start := time.Now().Unix()
+		GetModemPort()
+		log.Println(configuration)
 		for DeviceNum := range configuration.Devices {
-			if configuration.Devices[DeviceNum].ATPort == "" {
-				continue
+			if configuration.Devices[DeviceNum].Status == "READY" {
+				if configuration.Devices[DeviceNum].MDMPortName == "" {
+					configuration.Devices[DeviceNum].Status = "OFF"
+					continue
+				}
+				MDMBaudRate, _ := strconv.Atoi(configuration.Devices[DeviceNum].MDMPortBaudRate)
+				MDMSerialConfig := &serial.Config{Name: configuration.Devices[DeviceNum].MDMPortName, Baud: MDMBaudRate, ReadTimeout: 5 /*毫秒*/}
+				MDMHandler, err := serial.OpenPort(MDMSerialConfig)
+				if err == nil {
+					configuration.Devices[DeviceNum].MDMPortHandler = MDMHandler
+				} else {
+					log.Println(err)
+					configuration.Devices[DeviceNum].Status = "OFF"
+					continue
+				}
+				if configuration.Devices[DeviceNum].PCUIPortName != "" {
+					PCUISerialConfig := &serial.Config{Name: configuration.Devices[DeviceNum].PCUIPortName, Baud: 115200, ReadTimeout: 5 /*毫秒*/}
+					PCUIHandler, err := serial.OpenPort(PCUISerialConfig)
+					if err == nil {
+						configuration.Devices[DeviceNum].PCUIPortHandler = PCUIHandler
+					}
+				}
+				if configuration.Devices[DeviceNum].PCUIPortName != "" {
+					DIAGSerialConfig := &serial.Config{Name: configuration.Devices[DeviceNum].DIAGPortName, Baud: 115200, ReadTimeout: 5 /*毫秒*/}
+					DIAGHandler, err := serial.OpenPort(DIAGSerialConfig)
+					if err == nil {
+						configuration.Devices[DeviceNum].DIAGPortHandler = DIAGHandler
+					}
+				}
+				configuration.Devices[DeviceNum].Status = "ON"
 			}
-			UpdateDeviceInfo(&configuration.Devices[DeviceNum])
-			CheckSMS(&configuration, &configuration.Devices[DeviceNum])
-			if configuration.Devices[DeviceNum].DiagnosePort == "" {
-				continue
+			if configuration.Devices[DeviceNum].Status == "ON" {
+				CheckSMS(&configuration, &configuration.Devices[DeviceNum])
 			}
-			SendCommandLow(configuration.Devices[DeviceNum].DiagnosePortHandler, "ATE")
-			ProcessFeedBack(&configuration.Devices[DeviceNum], GetFeedback(&configuration.Devices[DeviceNum], 5))
 		}
-
+		end := time.Now().Unix()
+		if end-start < 5 {
+			time.Sleep(time.Second * time.Duration(5-end+start))
+		}
 	}
 }

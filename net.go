@@ -10,7 +10,7 @@ import (
 func SetProxy(config *Config) {
 	if config.Proxy != "" {
 		tr := http.Transport{}
-		parseProxyUrl, _ := url.Parse("http://127.0.0.1:8080")
+		parseProxyUrl, _ := url.Parse(configuration.Proxy)
 		tr.Proxy = http.ProxyURL(parseProxyUrl)
 		config.client = &http.Client{Transport: &tr}
 	} else {

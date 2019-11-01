@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="70dc911b-d3c1-423f-b78f-1013dc2ddbd5" name="Default Changelist" comment="Add post retry">
+      <change beforePath="$PROJECT_DIR$/modem.go" beforeDir="false" afterPath="$PROJECT_DIR$/modem.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/serial/usb_windows.go" beforeDir="false" afterPath="$PROJECT_DIR$/serial/usb_windows.go" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/call.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <folding>
+                <element signature="e#14#59#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/main.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="766">
+              <caret line="67" column="71" selection-start-line="67" selection-start-column="12" selection-end-line="67" selection-end-column="71" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/modem.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="684">
+              <caret line="46" column="23" selection-start-line="46" selection-start-column="23" selection-end-line="46" selection-end-column="23" />
+              <folding>
+                <element signature="e#14#125#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/SMS.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="418">
+              <caret line="30" column="9" selection-start-line="30" selection-start-column="9" selection-end-line="30" selection-end-column="9" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>CNMI</find>
+      <find>SetupDiGetClassDevs</find>
+      <find>getDevicesSet</find>
+      <find>classGuidsFromName</find>
+      <find>setupDiClassGuidsFromNameInternal</find>
+      <find>setupDiGetDeviceRegistryProperty</find>
+      <find>DeviceID</find>
+      <find>getInstanceID</find>
+      <find>setupDiGetDeviceInstanceId</find>
+      <find>procSetupDiGetDeviceRegistryPropertyW</find>
+      <find>procSetupDiGetDeviceInstanceIdW</find>
+      <find>dicsScope</find>
+      <find>regsam</find>
+      <find>digcfPresent</find>
+      <find>devicesSet</find>
+      <find>retrievePortNameFromDevInfo</find>
+      <find>dicsFlagGlobal</find>
+      <find>keyRead</find>
+      <find>setupDiDestroyDeviceInfoList</find>
+      <find>deviceInfo</find>
+      <find>retrievePortDetailsFromDevInfo</find>
+      <find>parseDeviceID</find>
+      <find>spdrpDeviceDesc</find>
+      <find>SendCommandLow</find>
+    </findStrings>
+  </component>
+  <component name="GOROOT" path="C:\Users\od0w0bo\scoop\apps\go\current" />
+  <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="Yilia &lt;admin@d0w0b.net&gt;" />
+      </list>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="SIGN_OFF_COMMIT" value="true" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/modem.gp.go" />
+        <option value="$PROJECT_DIR$/config.go" />
+        <option value="$PROJECT_DIR$/enumerator/doc.go" />
+        <option value="$PROJECT_DIR$/enumerator/enumerator.go" />
+        <option value="$PROJECT_DIR$/enumerator/usb_linux.go" />
+        <option value="$PROJECT_DIR$/serial/syscall_windows.go" />
+        <option value="$PROJECT_DIR$/serial/serial_openbsd.go" />
+        <option value="$PROJECT_DIR$/serial/unixutils/pipe.go" />
+        <option value="$PROJECT_DIR$/serial/unixutils/select.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator/example_getdetailedportlist_test.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator/usb_linux.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator/usb_freebsd.go" />
+        <option value="$PROJECT_DIR$/serial/zsyscall_windows.go" />
+        <option value="$PROJECT_DIR$/serial/zsyscall_openbsd.go" />
+        <option value="$PROJECT_DIR$/serial/zsyscall_linux.go" />
+        <option value="$PROJECT_DIR$/serial/zsyscall_freebsd.go" />
+        <option value="$PROJECT_DIR$/serial/zsyscall_darwin.go" />
+        <option value="$PROJECT_DIR$/serial/serial_windows.go" />
+        <option value="$PROJECT_DIR$/serial/serial_unix.go" />
+        <option value="$PROJECT_DIR$/serial/serial_linux.go" />
+        <option value="$PROJECT_DIR$/serial/serial_freebsd.go" />
+        <option value="$PROJECT_DIR$/serial/serial_darwin_amd64.go" />
+        <option value="$PROJECT_DIR$/serial/serial_darwin_386.go" />
+        <option value="$PROJECT_DIR$/serial/serial_darwin.go" />
+        <option value="$PROJECT_DIR$/serial/serial.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator/enumerator.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator/syscall_windows.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator/usb_darwin.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator/usb_darwin_go1.9.go" />
+        <option value="$PROJECT_DIR$/serial/portlist/portlist.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator/usb_ole_windows.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator/usb_windows.go" />
+        <option value="$PROJECT_DIR$/serial/enumerator.go" />
+        <option value="$PROJECT_DIR$/conf.json" />
+        <option value="$PROJECT_DIR$/main.go" />
+        <option value="$PROJECT_DIR$/SMS.go" />
+        <option value="$PROJECT_DIR$/net.go" />
+        <option value="$PROJECT_DIR$/serial/usb_windows.go" />
+        <option value="$PROJECT_DIR$/call.go" />
+        <option value="$PROJECT_DIR$/modem.go" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectConfigurationFiles">
+    <option name="files">
+      <list>
+        <option value="$PROJECT_DIR$/.idea/vcs.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="-12" />
+    <option name="y" value="-12" />
+    <option name="width" value="2762" />
+    <option name="height" value="1770" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="MeowWatcher" type="b2602c69:ProjectViewProjectNode" />
+              <item name="MeowWatcher" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="MeowWatcher" type="b2602c69:ProjectViewProjectNode" />
+              <item name="MeowWatcher" type="462c0819:PsiDirectoryNode" />
+              <item name="serial" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="GO_FMT" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="go.gopath.indexing.explicitly.defined" value="true" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="last_opened_file_path" value="$USER_HOME$" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-6" y="-6" width="1381" height="885" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23582767" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32891247" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Database Changes" order="8" />
+      <window_info anchor="bottom" id="Version Control" order="9" weight="0.32891247" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="10" sideWeight="0.49962208" visible="true" weight="0.30636606" />
+      <window_info anchor="bottom" id="Event Log" order="11" sideWeight="0.50037795" side_tool="true" weight="0.30636606" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Database" order="3" />
+    </layout>
+    <layout-to-restore>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.27210885" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" visible="true" weight="0.32891247" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Database Changes" order="8" />
+      <window_info anchor="bottom" id="Version Control" order="9" weight="0.32891247" />
+      <window_info anchor="bottom" id="Terminal" order="10" visible="true" weight="0.33023873" />
+      <window_info anchor="bottom" id="Event Log" order="11" side_tool="true" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Database" order="3" />
+    </layout-to-restore>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="UpdateCopyrightCheckinHandler">
+    <option name="UPDATE_COPYRIGHT" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT" value="true" />
+    <MESSAGE value="First Commit" />
+    <MESSAGE value="Fix init Bug and SMS bug" />
+    <MESSAGE value="Add conf-example" />
+    <MESSAGE value="Fix TimeZone display" />
+    <MESSAGE value="Add README.md" />
+    <MESSAGE value="Refactor the port description" />
+    <MESSAGE value="Advanced port discovery" />
+    <MESSAGE value="New way to detect diagnose port" />
+    <MESSAGE value="Add usb library" />
+    <MESSAGE value="Add Base Call Function" />
+    <MESSAGE value="Add Voice Port Detect" />
+    <MESSAGE value="Add post retry" />
+    <MESSAGE value="ADD support for 2G" />
+    <option name="LAST_COMMIT_MESSAGE" value="ADD support for 2G" />
+    <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
+    <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
+    <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/enumerator/enumerator.go" />
+    <entry file="file://$PROJECT_DIR$/enumerator/usb_windows.go" />
+    <entry file="file://$PROJECT_DIR$/enumerator/usb_linux.go" />
+    <entry file="file://$PROJECT_DIR$/serial/example_getportlist_test.go" />
+    <entry file="file://$PROJECT_DIR$/serial/example_modem_bits_test.go" />
+    <entry file="file://$PROJECT_DIR$/serial/example_serialport_test.go" />
+    <entry file="file://$PROJECT_DIR$/serial/doc.go" />
+    <entry file="file://$PROJECT_DIR$/serial/syscall_openbsd.go" />
+    <entry file="file://$PROJECT_DIR$/serial/syscall_linux.go" />
+    <entry file="file://$PROJECT_DIR$/serial/syscall_freebsd.go" />
+    <entry file="file://$PROJECT_DIR$/serial/README.md" />
+    <entry file="file://$PROJECT_DIR$/serial/serial_openbsd.go" />
+    <entry file="file://$PROJECT_DIR$/serial/.travis.yml" />
+    <entry file="file://$PROJECT_DIR$/serial/LICENSE" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/doc.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/example_getdetailedportlist_test.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/usb_windows_test.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/usb_linux.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/usb_freebsd.go" />
+    <entry file="file://$PROJECT_DIR$/serial/zsyscall_linux.go" />
+    <entry file="file://$PROJECT_DIR$/serial/zsyscall_freebsd.go" />
+    <entry file="file://$PROJECT_DIR$/serial/syscall_darwin.go" />
+    <entry file="file://$PROJECT_DIR$/serial/zsyscall_darwin.go" />
+    <entry file="file://$PROJECT_DIR$/serial/serial_unix.go" />
+    <entry file="file://$PROJECT_DIR$/serial/serial_linux.go" />
+    <entry file="file://$PROJECT_DIR$/serial/serial_freebsd.go" />
+    <entry file="file://$PROJECT_DIR$/serial/serial_darwin_amd64.go" />
+    <entry file="file://$PROJECT_DIR$/serial/serial_darwin_386.go" />
+    <entry file="file://$PROJECT_DIR$/serial/serial_darwin.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/usb_darwin_go1.9.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/usb_darwin.go" />
+    <entry file="file://$PROJECT_DIR$/serial/unixutils/pipe.go" />
+    <entry file="file://$PROJECT_DIR$/serial/unixutils/select.go" />
+    <entry file="file://$PROJECT_DIR$/serial/zsyscall_openbsd.go" />
+    <entry file="file://$PROJECT_DIR$/serial/portlist/portlist.go" />
+    <entry file="file://$PROJECT_DIR$/serial/serial.go" />
+    <entry file="file://$PROJECT_DIR$/serial/zsyscall_windows.go" />
+    <entry file="file://$PROJECT_DIR$/serial/serial_windows.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/usb_ole_windows.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/usb_windows.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/enumerator.go" />
+    <entry file="file://$PROJECT_DIR$/serial/enumerator/syscall_windows.go" />
+    <entry file="file://$PROJECT_DIR$/serial/syscall_windows.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="147">
+          <caret line="69" column="41" selection-start-line="69" selection-start-column="31" selection-end-line="69" selection-end-column="41" />
+          <folding>
+            <element signature="e#20#80#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/serial/usb_windows.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3358">
+          <caret line="179" column="43" selection-start-line="179" selection-start-column="38" selection-end-line="179" selection-end-column="43" />
+          <folding>
+            <element signature="e#20#98#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/conf.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="19">
+          <caret line="1" column="8" selection-start-line="1" selection-start-column="3" selection-end-line="1" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/net.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="133">
+          <caret line="7" column="1" lean-forward="true" selection-end-line="43" />
+          <folding>
+            <element signature="e#14#65#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/serial/enumerator.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="15" selection-start-line="15" selection-end-line="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/call.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="e#14#59#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/modem.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="684">
+          <caret line="46" column="23" selection-start-line="46" selection-start-column="23" selection-end-line="46" selection-end-column="23" />
+          <folding>
+            <element signature="e#14#125#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/SMS.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="418">
+          <caret line="30" column="9" selection-start-line="30" selection-start-column="9" selection-end-line="30" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="766">
+          <caret line="67" column="71" selection-start-line="67" selection-start-column="12" selection-end-line="67" selection-end-column="71" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
