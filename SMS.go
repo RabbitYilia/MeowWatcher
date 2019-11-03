@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"github.com/xlab/at/sms"
 	"log"
@@ -72,8 +74,10 @@ func CheckSMS(Configure *Config, Device *Device) error {
 					ReceiveTime := time.Now().Format("2006-01-02 15:04:05")
 					SendTime := Args[1] + "-" + Args[2] + "-" + Args[3] + " " + Args[4] + ":" + Args[5] + ":" + Args[6]
 					Body := strings.Split(SMSResponse, "\r\n")[1]
+					Body,_=u2s(Body)
 					Data := "From:" + From + "\r\n" + "To:" + To + "\r\n" + "Send:" + SendTime + "\r\n" + "Received:" + ReceiveTime + "\r\n" + Body
 					log.Println("[", Device.Name, "]", "New SMS:", Tittle, " ", Body)
+					log.Println(Data)
 					for PushNum := range Device.PushAddrs {
 						PushContent := strings.Replace(Device.PushAddrs[PushNum].Body, "{.Tittle}", url.QueryEscape(Tittle), -1)
 						PushContent = strings.Replace(PushContent, "{.Content}", url.QueryEscape(Data), -1)
@@ -116,4 +120,16 @@ func ProcessPDUTimestamp(data []byte) string {
 	}
 	Zone = strconv.Itoa(ZoneInt / 4)
 	return "UTC+" + Zone + " 20" + Year + "-" + Month + "-" + Day + " " + Hour + ":" + Minute + ":" + Sec
+}
+
+func u2s(form string) (to string, err error) {
+	bs:= []byte(form)
+	if err != nil {
+		return
+	}
+	for i, bl, br, r := 0, len(bs), bytes.NewReader(bs), uint16(0); i < bl; i += 2 {
+		binary.Read(br, binary.BigEndian, &r)
+		to += string(r)
+	}
+	return
 }
