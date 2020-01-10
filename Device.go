@@ -12,6 +12,8 @@ func DeviceInit(DeviceName string) {
 		SIMCOM_INIT(DeviceName)
 	case "Quectel":
 		Quectel_INIT(DeviceName)
+	case "huawei":
+		Huawei_INIT(DeviceName)
 	}
 	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] = "ON"
 	DebugOutput(0, fmt.Sprintf("%s Online", DeviceName))
@@ -23,6 +25,8 @@ func DeviceStatusUpdate(DeviceName string) {
 		SIMCOM_Status_Update(DeviceName)
 	case "Quectel":
 		Quectel_Status_Update(DeviceName)
+	case "huawei":
+		Huawei_Status_Update(DeviceName)
 	}
 }
 
@@ -58,15 +62,19 @@ func DeviceGetSMS(DeviceName string) {
 		SIMCOM_Get_SMS(DeviceName)
 	case "Quectel":
 		Quectel_Get_SMS(DeviceName)
+	case "huawei":
+		Huawei_Get_SMS(DeviceName)
 	}
 }
 
 func DeviceSendSMS(DeviceName string, DstPhone string, Content string) error {
 	switch Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Manufacture"].(string) {
 	case "SIMCOM INCORPORATED":
-		return SIMCOM_SEND_SMS(DeviceName,DstPhone,Content)
+		return SIMCOM_SEND_SMS(DeviceName, DstPhone, Content)
 	case "Quectel":
-		return Quectel_SEND_SMS(DeviceName,DstPhone,Content)
+		return Quectel_SEND_SMS(DeviceName, DstPhone, Content)
+	case "huawei":
+		return Huawei_SEND_SMS(DeviceName, DstPhone, Content)
 	}
 	return errors.New("Unknown")
 }

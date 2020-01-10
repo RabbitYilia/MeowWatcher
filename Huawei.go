@@ -10,18 +10,19 @@ import (
 	"strings"
 )
 
-func Quectel_INIT(DeviceName string) {
-	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["HWVersion"] = Quectel_GET(DeviceName, "HWVersion")
-	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Model"] = Quectel_GET(DeviceName, "Model")
-	Quectel_SET(DeviceName, "CellNetworkRegister", "2")
-	Quectel_SET(DeviceName, "TECharset", "UCS2")
-	Quectel_SET(DeviceName, "MessageStorage", "\"ME\",\"ME\",\"ME\"")
-	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"] = Quectel_GET(DeviceName, "PhoneNumber")
-	Quectel_Status_Update(DeviceName)
+func Huawei_INIT(DeviceName string) {
+	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["HWVersion"] = Huawei_GET(DeviceName, "HWVersion")
+	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Model"] = Huawei_GET(DeviceName, "Model")
+	Huawei_SET(DeviceName, "CellNetworkRegister", "2")
+	Huawei_SET(DeviceName, "TECharset", "UCS2")
+	Huawei_SET(DeviceName, "MessageStorage", "\"ME\",\"ME\",\"ME\"")
+	DeivceSendCommand(DeviceName, "AT^SYSCFG=2,2,3FFFFFFF,2,4")
+	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"] = Huawei_GET(DeviceName, "PhoneNumber")
+	Huawei_Status_Update(DeviceName)
 }
 
-func Quectel_Status_Update(DeviceName string) {
-	CellNetworkRegisterStatus := Quectel_GET(DeviceName, "CellNetworkRegisterStatus")
+func Huawei_Status_Update(DeviceName string) {
+	CellNetworkRegisterStatus := Huawei_GET(DeviceName, "CellNetworkRegisterStatus")
 	switch CellNetworkRegisterStatus {
 	case "Home":
 		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "Home"
@@ -41,20 +42,20 @@ func Quectel_Status_Update(DeviceName string) {
 		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "No"
 		DeviceError(DeviceName, errors.New("Device Not Registered"))
 	}
-	OperatorName := Quectel_GET(DeviceName, "GetOperatorName")
+	OperatorName := Huawei_GET(DeviceName, "GetOperatorName")
 	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperatorName"] = OperatorName
-	OperationMode := Quectel_GET(DeviceName, "GetOperationMode")
+	OperationMode := Huawei_GET(DeviceName, "GetOperationMode")
 	if OperationMode == "NONE" {
 		DeviceError(DeviceName, errors.New("OperationMode = NO SERVICE"))
 	}
 	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"] = OperationMode
-	//OperationStatus := Quectel_GET(DeviceName, "OperationStatus")
+	//OperationStatus := Huawei_GET(DeviceName, "OperationStatus")
 	//if OperationStatus != "Online" {
 	//	DeviceError(DeviceName, errors.New("OperationStatus = "+OperationStatus))
 	//}
 }
 
-func Quectel_GET(DeviceName string, Key string) string {
+func Huawei_GET(DeviceName string, Key string) string {
 	MDMHandler := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
 	switch Key {
 	case "HWVersion":
@@ -108,15 +109,16 @@ func Quectel_GET(DeviceName string, Key string) string {
 		OperatorName = strings.Replace(OperatorName, "\"", "", -1)
 		return OperatorName
 	case "GetOperationMode":
-		OperationMode, _, err := SendCommand(MDMHandler, "AT+QNWINFO")
+		OperationMode, _, err := SendCommand(MDMHandler, "AT^GETPORTMODE")
 		if err != nil {
 			DeviceError(DeviceName, err)
 		}
 		if OperationMode == "" {
 			DeviceError(DeviceName, errors.New("Illegal Response"))
 		}
-		OperationMode = strings.Replace(OperationMode, "+QNWINFO: ", "", -1)
+		OperationMode = strings.Replace(OperationMode, "^GETPORTMODE: ", "", -1)
 		OperationMode = strings.Split(OperationMode, ",")[0]
+		OperationMode = strings.Split(OperationMode, ":")[2]
 		OperationMode = strings.Replace(OperationMode, "\"", "", -1)
 		return OperationMode
 	case "SMSStatus":
@@ -160,7 +162,7 @@ func Quectel_GET(DeviceName string, Key string) string {
 	return ""
 }
 
-func Quectel_SET(DeviceName string, Key string, Value string) string {
+func Huawei_SET(DeviceName string, Key string, Value string) string {
 	MDMHandler := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
 	switch Key {
 	case "CellNetworkRegister":
@@ -202,18 +204,21 @@ func Quectel_SET(DeviceName string, Key string, Value string) string {
 	return ""
 }
 
-func Quectel_Get_SMS(DeviceName string) {
+func Huawei_Get_SMS(DeviceName string) {
 	OperationMode := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string)
-	Quectel_SET(DeviceName, "MessageFormat", "0")
+	Huawei_SET(DeviceName, "MessageFormat", "0")
 	for {
-		SMSStatus := Quectel_GET(DeviceName, "SMSStatus")
+		SMSStatus := Huawei_GET(DeviceName, "SMSStatus")
 		SMSTotal, _ := strconv.Atoi(strings.Split(SMSStatus, ",")[1])
-		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"] = Quectel_GET(DeviceName, "MessageFormat")
+		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"] = Huawei_GET(DeviceName, "MessageFormat")
 		if SMSTotal != 0 {
-			if strings.Contains(OperationMode, "CDMA1X") {
-				Quectel_Get_SMS_CDMA(DeviceName)
-			} else {
-				Quectel_Get_SMS_Common(DeviceName)
+			switch OperationMode {
+			default:
+				Huawei_Get_SMS_Common(DeviceName)
+			case "CDMA":
+				Huawei_Get_SMS_CDMA(DeviceName)
+			case "EV-DO":
+				Huawei_Get_SMS_CDMA(DeviceName)
 			}
 		} else {
 			break
@@ -221,25 +226,25 @@ func Quectel_Get_SMS(DeviceName string) {
 	}
 }
 
-func Quectel_Get_SMS_Common(DeviceName string) {
+func Huawei_Get_SMS_Common(DeviceName string) {
 	count := -1
 	for {
 		count++
-		SMSResponse := Quectel_SET(DeviceName, "ReadMessage", strconv.Itoa(count))
+		SMSResponse := Huawei_SET(DeviceName, "ReadMessage", strconv.Itoa(count))
 		if SMSResponse == "" {
 			continue
 		}
 		PDU := strings.Split(SMSResponse, "\r\n")[1]
 		DecodePDU(DeviceName, PDU)
-		Quectel_SET(DeviceName, "DeleteMessage", strconv.Itoa(count))
+		Huawei_SET(DeviceName, "DeleteMessage", strconv.Itoa(count))
 		break
 	}
 }
-func Quectel_Get_SMS_CDMA(DeviceName string) {
+func Huawei_Get_SMS_CDMA(DeviceName string) {
 
 }
 
-func Quectel_SEND_SMS(DeviceName string, DstPhone string, Content string) error {
+func Huawei_SEND_SMS(DeviceName string, DstPhone string, Content string) error {
 	SMS := sms.Message{
 		Text:     Content,
 		Encoding: sms.Encodings.UCS2,
