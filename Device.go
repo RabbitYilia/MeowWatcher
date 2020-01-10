@@ -9,11 +9,20 @@ import (
 func DeviceInit(DeviceName string) {
 	switch Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Manufacture"].(string) {
 	case "SIMCOM INCORPORATED":
-		SIMCOM_INIT(DeviceName)
+		err:=SIMCOM_INIT(DeviceName)
+		if(err!=nil){
+			DeviceStop(DeviceName,err.Error())
+		}
 	case "Quectel":
-		Quectel_INIT(DeviceName)
+		err:=Quectel_INIT(DeviceName)
+		if(err!=nil){
+			DeviceStop(DeviceName,err.Error())
+		}
 	case "huawei":
-		Huawei_INIT(DeviceName)
+		err:=Huawei_INIT(DeviceName)
+		if(err!=nil){
+			DeviceStop(DeviceName,err.Error())
+		}
 	}
 	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] = "ON"
 	DebugOutput(0, fmt.Sprintf("%s Online", DeviceName))
@@ -22,11 +31,20 @@ func DeviceInit(DeviceName string) {
 func DeviceStatusUpdate(DeviceName string) {
 	switch Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Manufacture"].(string) {
 	case "SIMCOM INCORPORATED":
-		SIMCOM_Status_Update(DeviceName)
+		err:=SIMCOM_Status_Update(DeviceName)
+		if(err!=nil){
+			DeviceStop(DeviceName,err.Error())
+		}
 	case "Quectel":
-		Quectel_Status_Update(DeviceName)
+		err:=Quectel_Status_Update(DeviceName)
+		if(err!=nil){
+			DeviceStop(DeviceName,err.Error())
+		}
 	case "huawei":
-		Huawei_Status_Update(DeviceName)
+		err:=Huawei_Status_Update(DeviceName)
+		if(err!=nil){
+			DeviceStop(DeviceName,err.Error())
+		}
 	}
 }
 
@@ -39,6 +57,9 @@ func GetManufacture(DeviceName string) {
 }
 
 func DeviceError(DeviceName string, err error) {
+	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"].(string) == "STOP" {
+		return
+	}
 	DebugOutput(0, DeviceName, err)
 	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"] != nil {
 		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser).Close()
@@ -59,11 +80,20 @@ func DeviceStop(DeviceName string, Output string) {
 func DeviceGetSMS(DeviceName string) {
 	switch Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Manufacture"].(string) {
 	case "SIMCOM INCORPORATED":
-		SIMCOM_Get_SMS(DeviceName)
+		err:=SIMCOM_Get_SMS(DeviceName)
+		if(err!=nil){
+			DeviceStop(DeviceName,err.Error())
+		}
 	case "Quectel":
-		Quectel_Get_SMS(DeviceName)
+		err:=Quectel_Get_SMS(DeviceName)
+		if(err!=nil){
+			DeviceStop(DeviceName,err.Error())
+		}
 	case "huawei":
-		Huawei_Get_SMS(DeviceName)
+		err:=Huawei_Get_SMS(DeviceName)
+		if(err!=nil){
+			DeviceStop(DeviceName,err.Error())
+		}
 	}
 }
 

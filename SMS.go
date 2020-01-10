@@ -8,14 +8,19 @@ import (
 	"time"
 )
 
-func DecodePDU(DeviceName string, PDU string) {
+func DecodePDU(DeviceName string, PDU string) error {
 	PhoneNumber := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"].(string)
 	PDUData, err := hex.DecodeString(PDU)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 	msg := new(sms.Message)
-	msg.ReadFrom(PDUData)
+	_, err = msg.ReadFrom(PDUData)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 	SendTime := ProcessPDUTimestamp(msg.ServiceCenterTime.PDU())
 	ReceiveTime := time.Now().Format("2006-01-02 15:04:05")
 	From := string(msg.Address)
@@ -26,6 +31,7 @@ func DecodePDU(DeviceName string, PDU string) {
 	PushSC(DeviceName, Tittle, Data)
 	PushTG(DeviceName, Tittle, Data)
 	AddSMSToDB(DeviceName, Tittle, Data)
+	return nil
 }
 
 func ProcessPDUTimestamp(data []byte) string {
