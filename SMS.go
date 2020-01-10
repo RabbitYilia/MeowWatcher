@@ -1,109 +1,31 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"github.com/xlab/at/sms"
 	"log"
-	"net/url"
 	"strconv"
-	"strings"
 	"time"
 )
 
-func CheckSMS(Configure *Config, Device *Device) error {
-	_, _, err := SendCommandLow(Device.MDMPortHandler, "AT+CPMS= \"ME\",\"ME\",\"ME\"")
+func DecodePDU(DeviceName string, PDU string) {
+	PhoneNumber := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"].(string)
+	PDUData, err := hex.DecodeString(PDU)
 	if err != nil {
-		Device.CloseDevice()
-		return err
+		log.Fatal(err)
 	}
-	SMSStatus, _, err := SendCommandLow(Device.MDMPortHandler, "AT+CPMS?")
-	if strings.Split(SMSStatus, ",")[1] != "0" {
-		sum := 0
-		SMSResponse := ""
-		for {
-			if Device.TYPE == "WCDMA" {
-				SMSResponse, _, err = SendCommandLow(Device.MDMPortHandler, "AT+CMGR="+strconv.Itoa(sum))
-				if err != nil {
-					Device.CloseDevice()
-					return err
-				}
-				if !strings.Contains(SMSResponse, "+CMGR:") {
-					sum++
-				} else {
-					PDU := strings.Split(SMSResponse, "\r\n")
-					PDUData, err := hex.DecodeString(PDU[1])
-					if err != nil {
-						log.Fatal(err)
-					}
-					msg := new(sms.Message)
-					msg.ReadFrom(PDUData)
-					SendTime := ProcessPDUTimestamp(msg.ServiceCenterTime.PDU())
-					ReceiveTime := time.Now().Format("2006-01-02 15:04:05")
-					From := string(msg.Address)
-					To := Device.Name + "@" + Device.PhoneNumber
-					Tittle := From + "->" + To
-					Data := "From:" + From + "\r\n" + "To:" + To + "\r\n" + "Send:" + SendTime + "\r\n" + "Received:" + ReceiveTime + "\r\n" + msg.Text
-					log.Println("[", Device.Name, "]", "New SMS:", Tittle, " ", msg.Text)
-					for PushNum := range Device.PushAddrs {
-						PushContent := strings.Replace(Device.PushAddrs[PushNum].Body, "{.Tittle}", url.QueryEscape(Tittle), -1)
-						PushContent = strings.Replace(PushContent, "{.Content}", url.QueryEscape(Data), -1)
-						PushByPost(Configure.client, Device.PushAddrs[PushNum].URL, PushContent)
-					}
-					log.Println("[", Device.Name, "]", "Delete No", sum, " SMS")
-					SendCommandLow(Device.MDMPortHandler, "AT+CMGD="+strconv.Itoa(sum))
-					break
-				}
-			} else {
-				SMSResponse, _, err = SendCommandLow(Device.MDMPortHandler, "AT^HCMGR="+strconv.Itoa(sum))
-				if err != nil {
-					Device.CloseDevice()
-					return err
-				}
-				if !strings.Contains(SMSResponse, "^HCMGR:") {
-					sum++
-				} else {
-					//^HCMGR:106980095595,2019,09,30,12,12,26,0,6,134,0,0,0,1
-					Arg := strings.Split(SMSResponse, "HCMGR:")[1]
-					Arg = strings.Split(Arg, "\r\n")[0]
-					Args := strings.Split(Arg, ",")
-					From := Args[0]
-					To := Device.Name + "@" + Device.PhoneNumber
-					Tittle := From + "->" + To
-					ReceiveTime := time.Now().Format("2006-01-02 15:04:05")
-					SendTime := Args[1] + "-" + Args[2] + "-" + Args[3] + " " + Args[4] + ":" + Args[5] + ":" + Args[6]
-					Body := strings.Split(SMSResponse, "\r\n")[1]
-					Body,_=u2s(Body)
-					Data := "From:" + From + "\r\n" + "To:" + To + "\r\n" + "Send:" + SendTime + "\r\n" + "Received:" + ReceiveTime + "\r\n" + Body
-					log.Println("[", Device.Name, "]", "New SMS:", Tittle, " ", Body)
-					log.Println(Data)
-					for PushNum := range Device.PushAddrs {
-						PushContent := strings.Replace(Device.PushAddrs[PushNum].Body, "{.Tittle}", url.QueryEscape(Tittle), -1)
-						PushContent = strings.Replace(PushContent, "{.Content}", url.QueryEscape(Data), -1)
-						PushByPost(Configure.client, Device.PushAddrs[PushNum].URL, PushContent)
-					}
-					log.Println("[", Device.Name, "]", "Delete No", sum, " SMS")
-					_, _, err = SendCommandLow(Device.MDMPortHandler, "AT+CMGD="+strconv.Itoa(sum))
-					if err != nil {
-						Device.CloseDevice()
-						return err
-					}
-					break
-				}
-			}
-		}
-	} else {
-		log.Println("[", Device.Name, "]", "No SMS Received")
-	}
-	return nil
-}
-
-func ProcessTimestampAttr(Data byte) string {
-	high := uint(Data >> 4)
-	low := uint(Data << 4)
-	low = low >> 4
-	return strconv.FormatUint(uint64(low), 10) + strconv.FormatUint(uint64(high), 10)
+	msg := new(sms.Message)
+	msg.ReadFrom(PDUData)
+	SendTime := ProcessPDUTimestamp(msg.ServiceCenterTime.PDU())
+	ReceiveTime := time.Now().Format("2006-01-02 15:04:05")
+	From := string(msg.Address)
+	To := DeviceName + "@" + PhoneNumber
+	Tittle := From + "->" + To
+	Data := "From:" + From + "\r\n" + "To:" + To + "\r\n" + "Send:" + SendTime + "\r\n" + "Received:" + ReceiveTime + "\r\n" + msg.Text
+	log.Println("[", DeviceName, "]", "New SMS:", Tittle, " ", msg.Text)
+	PushSC(DeviceName, Tittle, Data)
+	PushTG(DeviceName, Tittle, Data)
+	AddSMSToDB(DeviceName, Tittle, Data)
 }
 
 func ProcessPDUTimestamp(data []byte) string {
@@ -122,14 +44,9 @@ func ProcessPDUTimestamp(data []byte) string {
 	return "UTC+" + Zone + " 20" + Year + "-" + Month + "-" + Day + " " + Hour + ":" + Minute + ":" + Sec
 }
 
-func u2s(form string) (to string, err error) {
-	bs:= []byte(form)
-	if err != nil {
-		return
-	}
-	for i, bl, br, r := 0, len(bs), bytes.NewReader(bs), uint16(0); i < bl; i += 2 {
-		binary.Read(br, binary.BigEndian, &r)
-		to += string(r)
-	}
-	return
+func ProcessTimestampAttr(Data byte) string {
+	high := uint(Data >> 4)
+	low := uint(Data << 4)
+	low = low >> 4
+	return strconv.FormatUint(uint64(low), 10) + strconv.FormatUint(uint64(high), 10)
 }

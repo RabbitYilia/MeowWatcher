@@ -3,10 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"regexp"
-	"strconv"
-	"strings"
-
 	"syscall"
 	"unsafe"
 
@@ -14,108 +10,75 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func GetModemPort() {
+func SeekOfflineDevice() {
 	MDMguid, _ := classGuidsFromName("Modem")
 	MDMDeviceSet, _ := MDMguid[0].getDevicesSet()
 	Serialguid, _ := classGuidsFromName("Ports")
 	SerialDeviceSet, _ := Serialguid[0].getDevicesSet()
 	//USB\VID_12D1&PID_140B&MI_00\6&[2C7B652D]&5&0000
-	DeviceIDExp := regexp.MustCompile(`&([0-9A-Fa-f])*&`)
-	VIDExp := regexp.MustCompile("VID_[0-9A-Fa-f]*")
-	MIExp := regexp.MustCompile("MI_[0-9A-Fa-f]*")
+	//DeviceIDExp := regexp.MustCompile(`&([0-9A-Fa-f])*&`)
+	//VIDExp := regexp.MustCompile("VID_[0-9A-Fa-f]*")
+	//MIExp := regexp.MustCompile("MI_[0-9A-Fa-f]*")
 	for i := 0; ; i++ {
 		MDMdevice, err := MDMDeviceSet.getDeviceInfo(i)
 		if err != nil {
 			break
 		}
 		MDMPortName, _ := retrievePortNameFromDevInfo(MDMdevice)
-		MDMInstanseID, _ := MDMdevice.getInstanceID()
-		DeviceID := strings.Replace(DeviceIDExp.FindStringSubmatch(MDMInstanseID)[0], "&", "", -1)
-		VID := strings.Replace(VIDExp.FindStringSubmatch(MDMInstanseID)[0], "VID_", "", -1)
-		PortBusy := false
-		for DeviceNum, _ := range configuration.Devices {
-			if configuration.Devices[DeviceNum].Status == "OFF" {
+		//MDMInstanseID, _ := MDMdevice.getInstanceID()
+		//DeviceID := strings.Replace(DeviceIDExp.FindStringSubmatch(MDMInstanseID)[0], "&", "", -1)
+		//VID := strings.Replace(VIDExp.FindStringSubmatch(MDMInstanseID)[0], "VID_", "", -1)
+		MDMOnline := false
+		for DeviceName, _ := range Config["Devices"].(map[string]interface{}) {
+			if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortName"] == nil {
 				continue
 			}
-			if MDMPortName == configuration.Devices[DeviceNum].MDMPortName {
-				PortBusy = true
+			DeivceMDMPortName := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortName"].(string)
+			DeviceStatus := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"].(string)
+			if (DeviceStatus == "ON" || DeviceStatus == "READY" || DeviceStatus == "STOP") && DeivceMDMPortName == MDMPortName {
+				MDMOnline = true
+				break
 			}
 		}
-		if PortBusy == true {
+		if MDMOnline == true {
 			continue
 		}
+
 		SerialConfig := &serial.Config{Name: MDMPortName, Baud: 115200, ReadTimeout: 5 /*毫秒*/}
 		Handler, err := serial.OpenPort(SerialConfig)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		_,_,err=SendCommandLow(Handler, "ATE1")
+		_, _, err = SendCommand(Handler, "ATE1")
 		if err != nil {
 			log.Println(err)
 			Handler.Close()
 			continue
 		}
-		IMEI, _ ,err:= SendCommandLow(Handler, "AT+CGSN")
+		IMEI, _, err := SendCommand(Handler, "AT+CGSN")
 		if err != nil {
 			log.Println(err)
 			Handler.Close()
 			continue
 		}
-		for DeviceNum, _ := range configuration.Devices {
-			if IMEI != configuration.Devices[DeviceNum].IMEI {
-				continue
+		for DeviceName, _ := range Config["Devices"].(map[string]interface{}) {
+			DeviceIMEI := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["IMEI"].(string)
+			if DeviceIMEI == IMEI {
+				Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortName"] = MDMPortName
+				Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"] = Handler
+				GetManufacture(DeviceName)
+				Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] = "READY"
+				MDMOnline = true
+				DeviceInit(DeviceName)
 			}
-			if configuration.Devices[DeviceNum].Status == "" {
-				configuration.Devices[DeviceNum].Status = "OFF"
-			}
-			if configuration.Devices[DeviceNum].Status != "OFF" {
-				break
-			}
-			switch VID {
-			case "12D1":
-				err=Huawei_Startup(Handler, &configuration.Devices[DeviceNum])
-				if err != nil {
-					log.Println(err)
-					Handler.Close()
-					continue
-				}
-			}
-			for j := 0; ; j++ {
-				SerialDevice, err := SerialDeviceSet.getDeviceInfo(j)
-				if err != nil {
-					break
-				}
-				SerialInstanseID, _ := SerialDevice.getInstanceID()
-				SerialDeviceID := strings.Replace(DeviceIDExp.FindStringSubmatch(SerialInstanseID)[0], "&", "", -1)
-				if SerialDeviceID != DeviceID {
-					continue
-				}
-				MI := strings.Replace(MIExp.FindStringSubmatch(SerialInstanseID)[0], "MI_", "", -1)
-				thisMI, _ := strconv.Atoi(MI)
-				if thisMI == configuration.Devices[DeviceNum].PCUI {
-					configuration.Devices[DeviceNum].PCUIPortName, _ = retrievePortNameFromDevInfo(SerialDevice)
-				}
-				if thisMI == configuration.Devices[DeviceNum].DIAG {
-					configuration.Devices[DeviceNum].DIAGPortName, _ = retrievePortNameFromDevInfo(SerialDevice)
-				}
-			}
-			configuration.Devices[DeviceNum].MDMPortBaudRate, _ ,err= SendCommandLow(Handler, "AT+IPR?")
-			if err != nil {
-				log.Println(err)
+			if MDMOnline == false {
 				Handler.Close()
-				continue
 			}
-			configuration.Devices[DeviceNum].MDMPortBaudRate = strings.Replace(configuration.Devices[DeviceNum].MDMPortBaudRate, "+IPR: ", "", -1)
-			configuration.Devices[DeviceNum].VID = VID
-			configuration.Devices[DeviceNum].DeviceID = DeviceID
-			configuration.Devices[DeviceNum].MDMPortName = MDMPortName
-			break
 		}
-		Handler.Close()
+		MDMDeviceSet.destroy()
+		SerialDeviceSet.destroy()
 	}
-	MDMDeviceSet.destroy()
-	SerialDeviceSet.destroy()
 }
 
 func retrievePortNameFromDevInfo(device *deviceInfo) (string, error) {

@@ -1,70 +1,44 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/tarm/goserial"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
-	"os"
-	"strconv"
 	"time"
 )
 
-var configuration Config
+var Config map[string]interface{}
 
 func main() {
-	file, _ := os.Open("conf.json")
-	decoder := json.NewDecoder(file)
-	configuration = Config{}
-	err := decoder.Decode(&configuration)
-	if err != nil {
-		log.Fatal(err)
-	}
-	file.Close()
+	Config = ReadConfigFromFile("conf.json")
+	InitDB()
+	SetProxy()
+	InitTGBotAPI()
 
-	SetProxy(&configuration)
 	for {
-		start := time.Now().Unix()
-		GetModemPort()
-		log.Println(configuration)
-		for DeviceNum := range configuration.Devices {
-			if configuration.Devices[DeviceNum].Status == "READY" {
-				if configuration.Devices[DeviceNum].MDMPortName == "" {
-					configuration.Devices[DeviceNum].Status = "OFF"
-					continue
-				}
-				MDMBaudRate, _ := strconv.Atoi(configuration.Devices[DeviceNum].MDMPortBaudRate)
-				MDMSerialConfig := &serial.Config{Name: configuration.Devices[DeviceNum].MDMPortName, Baud: MDMBaudRate, ReadTimeout: 5 /*毫秒*/}
-				MDMHandler, err := serial.OpenPort(MDMSerialConfig)
-				if err == nil {
-					configuration.Devices[DeviceNum].MDMPortHandler = MDMHandler
-				} else {
-					log.Println(err)
-					configuration.Devices[DeviceNum].Status = "OFF"
-					continue
-				}
-				if configuration.Devices[DeviceNum].PCUIPortName != "" {
-					PCUISerialConfig := &serial.Config{Name: configuration.Devices[DeviceNum].PCUIPortName, Baud: 115200, ReadTimeout: 5 /*毫秒*/}
-					PCUIHandler, err := serial.OpenPort(PCUISerialConfig)
-					if err == nil {
-						configuration.Devices[DeviceNum].PCUIPortHandler = PCUIHandler
-					}
-				}
-				if configuration.Devices[DeviceNum].PCUIPortName != "" {
-					DIAGSerialConfig := &serial.Config{Name: configuration.Devices[DeviceNum].DIAGPortName, Baud: 115200, ReadTimeout: 5 /*毫秒*/}
-					DIAGHandler, err := serial.OpenPort(DIAGSerialConfig)
-					if err == nil {
-						configuration.Devices[DeviceNum].DIAGPortHandler = DIAGHandler
-					}
-				}
-				configuration.Devices[DeviceNum].Status = "ON"
+		select {
+		case update := <-Config["TGUpdatesChan"].(tgbotapi.UpdatesChannel):
+			if update.Message == nil { // ignore any non-Message Updates
+				break
 			}
-			if configuration.Devices[DeviceNum].Status == "ON" {
-				CheckSMS(&configuration, &configuration.Devices[DeviceNum])
+			if(int64(update.Message.Date)<Config["TGStartTime"].(int64)){
+				break
 			}
-		}
-		end := time.Now().Unix()
-		if end-start < 5 {
-			time.Sleep(time.Second * time.Duration(5-end+start))
+			if(update.Message.ReplyToMessage==nil) {
+				ProcessTGCommand(update.Message.MessageID, update.Message.Chat.ID, update.Message.Text)
+			}else{
+				//ProcessTGReply()
+			}
+		default:
+			SeekOfflineDevice()
+			for DeviceName, _ := range Config["Devices"].(map[string]interface{}) {
+				DeviceStatus := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"]
+				if DeviceStatus == "ON" {
+					DeviceStatusUpdate(DeviceName)
+					DeviceGetSMS(DeviceName)
+				}
+			}
+			log.Println(Config)
+			time.Sleep(time.Second * 5)
 		}
 	}
 }
