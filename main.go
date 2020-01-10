@@ -20,12 +20,12 @@ func main() {
 			if update.Message == nil { // ignore any non-Message Updates
 				break
 			}
-			if(int64(update.Message.Date)<Config["TGStartTime"].(int64)){
+			if int64(update.Message.Date) < Config["TGStartTime"].(int64) {
 				break
 			}
-			if(update.Message.ReplyToMessage==nil) {
+			if update.Message.ReplyToMessage == nil {
 				ProcessTGCommand(update.Message.MessageID, update.Message.Chat.ID, update.Message.Text)
-			}else{
+			} else {
 				//ProcessTGReply()
 			}
 		default:

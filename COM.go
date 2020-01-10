@@ -71,7 +71,7 @@ func SendCommand(Handler io.ReadWriteCloser, Command string) (string, string, er
 }
 
 func DeivceSendCommand(DeviceName string, Command string) (string, string, error) {
-	Handler:=Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
+	Handler := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
 	buffer := make([]byte, MAXRWLEN)
 	//发命令之前清空缓冲区
 	num, err := Handler.Read(buffer)
@@ -132,7 +132,7 @@ func DeivceSendCommand(DeviceName string, Command string) (string, string, error
 	return ReturnBuffer, StatusBuffer, nil
 }
 func DeivceSendPDU(DeviceName string, PDU string) (string, string, error) {
-	Handler:=Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
+	Handler := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
 	buffer := make([]byte, MAXRWLEN)
 	//发命令之前清空缓冲区
 	num, err := Handler.Read(buffer)

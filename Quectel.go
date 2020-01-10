@@ -10,18 +10,18 @@ import (
 	"strings"
 )
 
-func SIMCOM_INIT(DeviceName string) {
-	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["HWVersion"] = SIMCOM_GET(DeviceName, "HWVersion")
-	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Model"] = SIMCOM_GET(DeviceName, "Model")
-	SIMCOM_SET(DeviceName, "CellNetworkRegister", "2")
-	SIMCOM_SET(DeviceName, "TECharset", "UCS2")
-	SIMCOM_SET(DeviceName, "MessageStorage", "\"ME\",\"ME\",\"ME\"")
-	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"] = SIMCOM_GET(DeviceName, "PhoneNumber")
-	SIMCOM_Status_Update(DeviceName)
+func Quectel_INIT(DeviceName string) {
+	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["HWVersion"] = Quectel_GET(DeviceName, "HWVersion")
+	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Model"] = Quectel_GET(DeviceName, "Model")
+	Quectel_SET(DeviceName, "CellNetworkRegister", "2")
+	Quectel_SET(DeviceName, "TECharset", "UCS2")
+	Quectel_SET(DeviceName, "MessageStorage", "\"ME\",\"ME\",\"ME\"")
+	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"] = Quectel_GET(DeviceName, "PhoneNumber")
+	Quectel_Status_Update(DeviceName)
 }
 
-func SIMCOM_Status_Update(DeviceName string) {
-	CellNetworkRegisterStatus := SIMCOM_GET(DeviceName, "CellNetworkRegisterStatus")
+func Quectel_Status_Update(DeviceName string) {
+	CellNetworkRegisterStatus := Quectel_GET(DeviceName, "CellNetworkRegisterStatus")
 	switch CellNetworkRegisterStatus {
 	case "Home":
 		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "Home"
@@ -41,20 +41,20 @@ func SIMCOM_Status_Update(DeviceName string) {
 		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "No"
 		DeviceError(DeviceName, errors.New("Device Not Registered"))
 	}
-	OperatorName := SIMCOM_GET(DeviceName, "GetOperatorName")
+	OperatorName := Quectel_GET(DeviceName, "GetOperatorName")
 	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperatorName"] = OperatorName
-	OperationMode := SIMCOM_GET(DeviceName, "GetOperationMode")
-	if OperationMode == "NO SERVICE" {
+	OperationMode := Quectel_GET(DeviceName, "GetOperationMode")
+	if OperationMode == "NONE" {
 		DeviceError(DeviceName, errors.New("OperationMode = NO SERVICE"))
 	}
 	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"] = OperationMode
-	OperationStatus := SIMCOM_GET(DeviceName, "OperationStatus")
-	if OperationStatus != "Online" {
-		DeviceError(DeviceName, errors.New("OperationStatus = "+OperationStatus))
-	}
+	//OperationStatus := Quectel_GET(DeviceName, "OperationStatus")
+	//if OperationStatus != "Online" {
+	//	DeviceError(DeviceName, errors.New("OperationStatus = "+OperationStatus))
+	//}
 }
 
-func SIMCOM_GET(DeviceName string, Key string) string {
+func Quectel_GET(DeviceName string, Key string) string {
 	MDMHandler := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
 	switch Key {
 	case "HWVersion":
@@ -108,27 +108,17 @@ func SIMCOM_GET(DeviceName string, Key string) string {
 		OperatorName = strings.Replace(OperatorName, "\"", "", -1)
 		return OperatorName
 	case "GetOperationMode":
-		OperationMode, _, err := SendCommand(MDMHandler, "AT+CPSI?")
+		OperationMode, _, err := SendCommand(MDMHandler, "AT+QNWINFO")
 		if err != nil {
 			DeviceError(DeviceName, err)
 		}
 		if OperationMode == "" {
 			DeviceError(DeviceName, errors.New("Illegal Response"))
 		}
-		OperationMode = strings.Replace(OperationMode, "+CPSI: ", "", -1)
+		OperationMode = strings.Replace(OperationMode, "+QNWINFO: ", "", -1)
 		OperationMode = strings.Split(OperationMode, ",")[0]
+		OperationMode = strings.Replace(OperationMode, "\"","",-1)
 		return OperationMode
-	case "OperationStatus":
-		OperationStatus, _, err := SendCommand(MDMHandler, "AT+CPSI?")
-		if err != nil {
-			DeviceError(DeviceName, err)
-		}
-		if OperationStatus == "" {
-			DeviceError(DeviceName, errors.New("Illegal Response"))
-		}
-		OperationStatus = strings.Replace(OperationStatus, "+CPSI: ", "", -1)
-		OperationStatus = strings.Split(OperationStatus, ",")[1]
-		return OperationStatus
 	case "SMSStatus":
 		SMSStatus, _, err := SendCommand(MDMHandler, "AT+CPMS?")
 		if err != nil {
@@ -170,7 +160,7 @@ func SIMCOM_GET(DeviceName string, Key string) string {
 	return ""
 }
 
-func SIMCOM_SET(DeviceName string, Key string, Value string) string {
+func Quectel_SET(DeviceName string, Key string, Value string) string {
 	MDMHandler := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
 	switch Key {
 	case "CellNetworkRegister":
@@ -212,21 +202,18 @@ func SIMCOM_SET(DeviceName string, Key string, Value string) string {
 	return ""
 }
 
-func SIMCOM_Get_SMS(DeviceName string) {
+func Quectel_Get_SMS(DeviceName string) {
 	OperationMode := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string)
-	SIMCOM_SET(DeviceName, "MessageFormat", "0")
+	Quectel_SET(DeviceName, "MessageFormat", "0")
 	for {
-		SMSStatus := SIMCOM_GET(DeviceName, "SMSStatus")
+		SMSStatus := Quectel_GET(DeviceName, "SMSStatus")
 		SMSTotal, _ := strconv.Atoi(strings.Split(SMSStatus, ",")[1])
-		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"] = SIMCOM_GET(DeviceName, "MessageFormat")
+		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"] = Quectel_GET(DeviceName, "MessageFormat")
 		if SMSTotal != 0 {
-			switch OperationMode {
-			default:
-				SIMCOM_Get_SMS_Common(DeviceName)
-			case "CDMA":
-				SIMCOM_Get_SMS_CDMA(DeviceName)
-			case "EVDO":
-				SIMCOM_Get_SMS_CDMA(DeviceName)
+			if strings.Contains(OperationMode,"CDMA1X"){
+				Quectel_Get_SMS_CDMA(DeviceName)
+			}else{
+				Quectel_Get_SMS_Common(DeviceName)
 			}
 		} else {
 			break
@@ -234,25 +221,25 @@ func SIMCOM_Get_SMS(DeviceName string) {
 	}
 }
 
-func SIMCOM_Get_SMS_Common(DeviceName string) {
+func Quectel_Get_SMS_Common(DeviceName string) {
 	count := -1
 	for {
 		count++
-		SMSResponse := SIMCOM_SET(DeviceName, "ReadMessage", strconv.Itoa(count))
+		SMSResponse := Quectel_SET(DeviceName, "ReadMessage", strconv.Itoa(count))
 		if SMSResponse == "" {
 			continue
 		}
 		PDU := strings.Split(SMSResponse, "\r\n")[1]
 		DecodePDU(DeviceName, PDU)
-		SIMCOM_SET(DeviceName, "DeleteMessage", strconv.Itoa(count))
+		Quectel_SET(DeviceName, "DeleteMessage", strconv.Itoa(count))
 		break
 	}
 }
-func SIMCOM_Get_SMS_CDMA(DeviceName string) {
+func Quectel_Get_SMS_CDMA(DeviceName string) {
 
 }
 
-func SIMCOM_SEND_SMS(DeviceName string, DstPhone string, Content string) error {
+func Quectel_SEND_SMS(DeviceName string, DstPhone string, Content string) error {
 	SMS := sms.Message{
 		Text:     Content,
 		Encoding: sms.Encodings.UCS2,

@@ -20,7 +20,11 @@ func InitTGBotAPI() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	TGBot.Debug = true
+	if(DebugLevel>=3) {
+		TGBot.Debug = true
+	}else{
+		TGBot.Debug=false
+	}
 	Config["TGBot"] = TGBot
 	DebugOutput(0, "Authorized on account", TGBot.Self.UserName)
 	u := tgbotapi.NewUpdate(0)
