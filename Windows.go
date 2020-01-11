@@ -71,14 +71,15 @@ func SeekOfflineDevice() {
 				Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] = "READY"
 				MDMOnline = true
 				DeviceInit(DeviceName)
-			}
-			if MDMOnline == false {
-				Handler.Close()
+				break
 			}
 		}
-		MDMDeviceSet.destroy()
-		SerialDeviceSet.destroy()
+		if MDMOnline == false {
+			Handler.Close()
+		}
 	}
+	MDMDeviceSet.destroy()
+	SerialDeviceSet.destroy()
 }
 
 func retrievePortNameFromDevInfo(device *deviceInfo) (string, error) {

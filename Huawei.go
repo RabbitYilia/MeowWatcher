@@ -8,6 +8,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func Huawei_INIT(DeviceName string) error {
@@ -18,6 +19,14 @@ func Huawei_INIT(DeviceName string) error {
 			return errors.New("Device Not READY")
 		}
 	}
+	OperationMode, err := Huawei_GET(DeviceName, "GetOperationMode")
+	if err != nil {
+		return err
+	}
+	if OperationMode == "NONE" {
+		return errors.New("OperationMode = NO SERVICE")
+	}
+	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"] = OperationMode
 	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["HWVersion"], err = Huawei_GET(DeviceName, "HWVersion")
 	if err != nil {
 		return err
@@ -26,23 +35,25 @@ func Huawei_INIT(DeviceName string) error {
 	if err != nil {
 		return err
 	}
-	_, err = Huawei_SET(DeviceName, "CellNetworkRegister", "2")
-	if err != nil {
-		return err
-	}
-	_, err = Huawei_SET(DeviceName, "TECharset", "UCS2")
-	if err != nil {
-		return err
+	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string) != "EV-DO" {
+		_, err = Huawei_SET(DeviceName, "CellNetworkRegister", "2")
+		if err != nil {
+			return err
+		}
+		_, err = Huawei_SET(DeviceName, "TECharset", "UCS2")
+		if err != nil {
+			return err
+		}
+		_, _, err = DeivceSendCommand(DeviceName, "AT^SYSCFG=2,2,3FFFFFFF,2,4")
+		if err != nil {
+			return err
+		}
+		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"], err = Huawei_GET(DeviceName, "PhoneNumber")
+		if err != nil {
+			return err
+		}
 	}
 	_, err = Huawei_SET(DeviceName, "MessageStorage", "\"ME\",\"ME\",\"ME\"")
-	if err != nil {
-		return err
-	}
-	_, _, err = DeivceSendCommand(DeviceName, "AT^SYSCFG=2,2,3FFFFFFF,2,4")
-	if err != nil {
-		return err
-	}
-	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"], err = Huawei_GET(DeviceName, "PhoneNumber")
 	if err != nil {
 		return err
 	}
@@ -60,34 +71,36 @@ func Huawei_Status_Update(DeviceName string) error {
 			return errors.New("Device Not READY")
 		}
 	}
-	CellNetworkRegisterStatus, err := Huawei_GET(DeviceName, "CellNetworkRegisterStatus")
-	if err != nil {
-		return err
-	}
-	switch CellNetworkRegisterStatus {
-	case "Home":
-		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "Home"
-	case "Romaning":
-		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "Romaning"
-		DebugOutput(0, DeviceName, "Romaning")
-	case "Denied":
-		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "Denied"
-		DeviceStop(DeviceName, "Device Network Denied")
-		return errors.New("Device Stop")
-	case "No":
-		if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] != nil {
-			if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"].(string) != "No" {
-				return errors.New("Device Comes to Offline")
-			}
+	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string) != "EV-DO" {
+		CellNetworkRegisterStatus, err := Huawei_GET(DeviceName, "CellNetworkRegisterStatus")
+		if err != nil {
+			return err
 		}
-		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "No"
-		return errors.New("Device Not Registered")
+		switch CellNetworkRegisterStatus {
+		case "Home":
+			Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "Home"
+		case "Romaning":
+			Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "Romaning"
+			DebugOutput(0, DeviceName, "Romaning")
+		case "Denied":
+			Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "Denied"
+			DeviceStop(DeviceName, "Device Network Denied")
+			return errors.New("Device Stop")
+		case "No":
+			if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] != nil {
+				if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"].(string) != "No" {
+					return errors.New("Device Comes to Offline")
+				}
+			}
+			Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["RegisterStatus"] = "No"
+			return errors.New("Device Not Registered")
+		}
+		OperatorName, err := Huawei_GET(DeviceName, "GetOperatorName")
+		if err != nil {
+			return err
+		}
+		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperatorName"] = OperatorName
 	}
-	OperatorName, err := Huawei_GET(DeviceName, "GetOperatorName")
-	if err != nil {
-		return err
-	}
-	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperatorName"] = OperatorName
 	OperationMode, err := Huawei_GET(DeviceName, "GetOperationMode")
 	if err != nil {
 		return err
@@ -127,7 +140,9 @@ func Huawei_GET(DeviceName string, Key string) (string, error) {
 			return "", err
 		}
 		if Model == "" {
-			return "", errors.New("Illegal Response")
+			//return "", errors.New("Illegal Response")
+			//Some Huawei device do not provide Model info
+			return "", nil
 		}
 		return strings.Replace(Model, "+CGMM: ", "", -1), nil
 	case "CellNetworkRegisterStatus":
@@ -242,17 +257,27 @@ func Huawei_SET(DeviceName string, Key string, Value string) (string, error) {
 	case "ReadMessage":
 		SMSResponse, CmdStatus, err := SendCommand(MDMHandler, fmt.Sprintf("AT+CMGR=%s", Value))
 		if err != nil {
-			DeviceError(DeviceName, err)
+			return "", err
 		}
 		if CmdStatus != "OK" {
-			DeviceError(DeviceName, errors.New("Illegal Response"))
+			return "", errors.New("Illegal Response")
 		}
 		SMSResponse = strings.Replace(SMSResponse, "+CMGR: ", "", -1)
+		return SMSResponse, nil
+	case "ReadMessageCDMA":
+		SMSResponse, CmdStatus, err := SendCommand(MDMHandler, fmt.Sprintf("AT^HCMGR=%s", Value))
+		if err != nil {
+			return "", err
+		}
+		if CmdStatus != "OK" {
+			return "", errors.New("Illegal Response")
+		}
+		SMSResponse = strings.Replace(SMSResponse, "^HCMGR: ", "", -1)
 		return SMSResponse, nil
 	case "DeleteMessage":
 		_, _, err := SendCommand(MDMHandler, fmt.Sprintf("AT+CMGD=%s", Value))
 		if err != nil {
-			DeviceError(DeviceName, err)
+			return "", err
 		}
 	}
 	return "", nil
@@ -260,7 +285,11 @@ func Huawei_SET(DeviceName string, Key string, Value string) (string, error) {
 
 func Huawei_Get_SMS(DeviceName string) error {
 	OperationMode := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string)
-	Huawei_SET(DeviceName, "MessageFormat", "0")
+	if OperationMode == "EV-DO" {
+		Huawei_SET(DeviceName, "MessageFormat", "1")
+	} else {
+		Huawei_SET(DeviceName, "MessageFormat", "0")
+	}
 	for {
 		SMSStatus, err := Huawei_GET(DeviceName, "SMSStatus")
 		if err != nil {
@@ -300,6 +329,7 @@ func Huawei_Get_SMS(DeviceName string) error {
 }
 
 func Huawei_Get_SMS_Common(DeviceName string) error {
+	MessageFormat := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"]
 	count := -1
 	for {
 		count++
@@ -310,10 +340,18 @@ func Huawei_Get_SMS_Common(DeviceName string) error {
 		if SMSResponse == "" {
 			continue
 		}
-		PDU := strings.Split(SMSResponse, "\r\n")[1]
-		err = DecodePDU(DeviceName, PDU)
-		if err != nil {
-			return err
+		switch MessageFormat {
+		case "TEXT":
+			err = DecodeText(DeviceName, SMSResponse)
+			if err != nil {
+				return err
+			}
+		default:
+			PDU := strings.Split(SMSResponse, "\r\n")[1]
+			err = DecodePDU(DeviceName, PDU)
+			if err != nil {
+				return err
+			}
 		}
 		_, err = Huawei_SET(DeviceName, "DeleteMessage", strconv.Itoa(count))
 		if err != nil {
@@ -324,35 +362,133 @@ func Huawei_Get_SMS_Common(DeviceName string) error {
 	return nil
 }
 func Huawei_Get_SMS_CDMA(DeviceName string) error {
-	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] != nil {
-		Status := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"].(string)
-		if Status != "ON" && Status != "READY" {
-			return errors.New("Device Not Ready")
+	MessageFormat := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"]
+	count := -1
+	for {
+		count++
+		SMSResponse, err := Huawei_SET(DeviceName, "ReadMessageCDMA", strconv.Itoa(count))
+		if err != nil {
+			return err
 		}
+		if SMSResponse == "" {
+			continue
+		}
+		switch MessageFormat {
+		case "TEXT":
+			err = DecodeText(DeviceName, SMSResponse)
+			if err != nil {
+				return err
+			}
+		default:
+			PDU := strings.Split(SMSResponse, "\r\n")[1]
+			err = DecodePDU(DeviceName, PDU)
+			if err != nil {
+				return err
+			}
+		}
+		_, err = Huawei_SET(DeviceName, "DeleteMessage", strconv.Itoa(count))
+		if err != nil {
+			return err
+		}
+		break
 	}
+	//Prevent CPMS return empty with OK
+	time.Sleep(time.Second)
 	return nil
 }
 
 func Huawei_SEND_SMS(DeviceName string, DstPhone string, Content string) error {
-	SMS := sms.Message{
-		Text:     Content,
-		Encoding: sms.Encodings.UCS2,
-		Type:     sms.MessageTypes.Submit,
-		Address:  sms.PhoneNumber(DstPhone),
-	}
-	n, PDU, err := SMS.PDU()
-	if err != nil {
-		return err
-	}
-	hexPDU := strings.Replace(hex.EncodeToString(PDU), "00010005a1", "0001000581", 1)
-	_, _, err = DeivceSendCommand(DeviceName, "AT+CMGS="+strconv.Itoa(n))
-	if err != nil {
-		return err
-	}
-	Response, _, _ := DeivceSendPDU(DeviceName, hexPDU)
-	if strings.Contains(Response, "+CMGS:") {
-		return nil
+	OperationMode := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string)
+	if OperationMode == "EV-DO" {
+		Huawei_SET(DeviceName, "MessageFormat", "1")
 	} else {
-		return errors.New("Send Failed")
+		Huawei_SET(DeviceName, "MessageFormat", "0")
 	}
+	MessageFormat := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"]
+	switch MessageFormat {
+	case "TEXT":
+		switch OperationMode {
+		default:
+			_, _, err := DeivceSendCommand(DeviceName, "AT+CMGS=\""+DstPhone+"\"")
+			if err != nil {
+				return err
+			}
+			Response, _, _ := DeivceSendPDU(DeviceName, Content)
+			if strings.Contains(Response, "+CMGS:") {
+				return nil
+			} else {
+				return errors.New("Send Failed")
+			}
+		case "CDMA":
+			_, _, err := DeivceSendCommand(DeviceName, "AT^HCMGS=\""+DstPhone+"\"")
+			if err != nil {
+				return err
+			}
+			Response, _, _ := DeivceSendPDU(DeviceName, Content)
+			if strings.Contains(Response, "+CMGS:") {
+				return nil
+			} else {
+				return errors.New("Send Failed")
+			}
+		case "EV-DO":
+			_, _, err := DeivceSendCommand(DeviceName, "AT^HCMGS=\""+DstPhone+"\"")
+			if err != nil {
+				return err
+			}
+			Response, _, _ := DeivceSendPDU(DeviceName, Content)
+			if strings.Contains(Response, "+CMGS:") {
+				return nil
+			} else {
+				return errors.New("Send Failed")
+			}
+		}
+	default:
+		SMS := sms.Message{
+			Text:     Content,
+			Encoding: sms.Encodings.UCS2,
+			Type:     sms.MessageTypes.Submit,
+			Address:  sms.PhoneNumber(DstPhone),
+		}
+		n, PDU, err := SMS.PDU()
+		if err != nil {
+			return err
+		}
+		hexPDU := strings.Replace(hex.EncodeToString(PDU), "00010005a1", "0001000581", 1)
+		switch OperationMode {
+		default:
+			_, _, err = DeivceSendCommand(DeviceName, "AT+CMGS="+strconv.Itoa(n))
+			if err != nil {
+				return err
+			}
+			Response, _, _ := DeivceSendPDU(DeviceName, hexPDU)
+			if strings.Contains(Response, "+CMGS:") {
+				return nil
+			} else {
+				return errors.New("Send Failed")
+			}
+		case "CDMA":
+			_, _, err = DeivceSendCommand(DeviceName, "AT^HCMGS="+strconv.Itoa(n))
+			if err != nil {
+				return err
+			}
+			Response, _, _ := DeivceSendPDU(DeviceName, hexPDU)
+			if strings.Contains(Response, "^HCMGSS:") {
+				return nil
+			} else {
+				return errors.New("Send Failed")
+			}
+		case "EV-DO":
+			_, _, err = DeivceSendCommand(DeviceName, "AT^HCMGS="+strconv.Itoa(n))
+			if err != nil {
+				return err
+			}
+			Response, _, _ := DeivceSendPDU(DeviceName, hexPDU)
+			if strings.Contains(Response, "^HCMGSS:") {
+				return nil
+			} else {
+				return errors.New("Send Failed")
+			}
+		}
+	}
+	return nil
 }

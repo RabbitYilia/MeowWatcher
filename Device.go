@@ -4,24 +4,30 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 )
 
 func DeviceInit(DeviceName string) {
 	switch Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Manufacture"].(string) {
 	case "SIMCOM INCORPORATED":
-		err:=SIMCOM_INIT(DeviceName)
-		if(err!=nil){
-			DeviceStop(DeviceName,err.Error())
+		err := SIMCOM_INIT(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
 		}
 	case "Quectel":
-		err:=Quectel_INIT(DeviceName)
-		if(err!=nil){
-			DeviceStop(DeviceName,err.Error())
+		err := Quectel_INIT(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
 		}
 	case "huawei":
-		err:=Huawei_INIT(DeviceName)
-		if(err!=nil){
-			DeviceStop(DeviceName,err.Error())
+		err := Huawei_INIT(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
+		}
+	case "HUAWEI TECHNOLOGIES CO., LTD":
+		err := Huawei_INIT(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
 		}
 	}
 	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] = "ON"
@@ -31,19 +37,24 @@ func DeviceInit(DeviceName string) {
 func DeviceStatusUpdate(DeviceName string) {
 	switch Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Manufacture"].(string) {
 	case "SIMCOM INCORPORATED":
-		err:=SIMCOM_Status_Update(DeviceName)
-		if(err!=nil){
-			DeviceStop(DeviceName,err.Error())
+		err := SIMCOM_Status_Update(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
 		}
 	case "Quectel":
-		err:=Quectel_Status_Update(DeviceName)
-		if(err!=nil){
-			DeviceStop(DeviceName,err.Error())
+		err := Quectel_Status_Update(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
 		}
 	case "huawei":
-		err:=Huawei_Status_Update(DeviceName)
-		if(err!=nil){
-			DeviceStop(DeviceName,err.Error())
+		err := Huawei_Status_Update(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
+		}
+	case "HUAWEI TECHNOLOGIES CO., LTD":
+		err := Huawei_Status_Update(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
 		}
 	}
 }
@@ -53,12 +64,15 @@ func GetManufacture(DeviceName string) {
 	if err != nil {
 		DeviceError(DeviceName, err)
 	}
+	Manufacture = strings.Replace(Manufacture, "+GMI: ", "", -1)
 	Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Manufacture"] = Manufacture
 }
 
 func DeviceError(DeviceName string, err error) {
-	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"].(string) == "STOP" {
-		return
+	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] != nil {
+		if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"].(string) == "STOP" {
+			return
+		}
 	}
 	DebugOutput(0, DeviceName, err)
 	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"] != nil {
@@ -80,19 +94,24 @@ func DeviceStop(DeviceName string, Output string) {
 func DeviceGetSMS(DeviceName string) {
 	switch Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Manufacture"].(string) {
 	case "SIMCOM INCORPORATED":
-		err:=SIMCOM_Get_SMS(DeviceName)
-		if(err!=nil){
-			DeviceStop(DeviceName,err.Error())
+		err := SIMCOM_Get_SMS(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
 		}
 	case "Quectel":
-		err:=Quectel_Get_SMS(DeviceName)
-		if(err!=nil){
-			DeviceStop(DeviceName,err.Error())
+		err := Quectel_Get_SMS(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
 		}
 	case "huawei":
-		err:=Huawei_Get_SMS(DeviceName)
-		if(err!=nil){
-			DeviceStop(DeviceName,err.Error())
+		err := Huawei_Get_SMS(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
+		}
+	case "HUAWEI TECHNOLOGIES CO., LTD":
+		err := Huawei_Get_SMS(DeviceName)
+		if err != nil {
+			DeviceError(DeviceName, err)
 		}
 	}
 }
@@ -104,6 +123,8 @@ func DeviceSendSMS(DeviceName string, DstPhone string, Content string) error {
 	case "Quectel":
 		return Quectel_SEND_SMS(DeviceName, DstPhone, Content)
 	case "huawei":
+		return Huawei_SEND_SMS(DeviceName, DstPhone, Content)
+	case "HUAWEI TECHNOLOGIES CO., LTD":
 		return Huawei_SEND_SMS(DeviceName, DstPhone, Content)
 	}
 	return errors.New("Unknown")

@@ -323,6 +323,7 @@ func SIMCOM_Get_SMS(DeviceName string) error {
 }
 
 func SIMCOM_Get_SMS_Common(DeviceName string) error {
+	MessageFormat := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"]
 	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] != nil {
 		Status := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"].(string)
 		if Status != "ON" && Status != "READY" {
@@ -339,10 +340,18 @@ func SIMCOM_Get_SMS_Common(DeviceName string) error {
 		if SMSResponse == "" {
 			continue
 		}
-		PDU := strings.Split(SMSResponse, "\r\n")[1]
-		err = DecodePDU(DeviceName, PDU)
-		if err != nil {
-			return err
+		switch MessageFormat {
+		case "TEXT":
+			err = DecodeText(DeviceName, SMSResponse)
+			if err != nil {
+				return err
+			}
+		default:
+			PDU := strings.Split(SMSResponse, "\r\n")[1]
+			err = DecodePDU(DeviceName, PDU)
+			if err != nil {
+				return err
+			}
 		}
 		_, err = SIMCOM_SET(DeviceName, "DeleteMessage", strconv.Itoa(count))
 		if err != nil {
