@@ -8,6 +8,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func SIMCOM_INIT(DeviceName string) error {
@@ -115,6 +116,7 @@ func SIMCOM_GET(DeviceName string, Key string) (string, error) {
 	MDMHandler := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
 	switch Key {
 	case "HWVersion":
+		//+CGMR: LE11B12SIM7600M22
 		HWVersion, _, err := SendCommand(MDMHandler, "AT+CGMR")
 		if err != nil {
 			return "", err
@@ -124,6 +126,7 @@ func SIMCOM_GET(DeviceName string, Key string) (string, error) {
 		}
 		return strings.Replace(HWVersion, "+CGMR: ", "", -1), nil
 	case "Model":
+		//SIMCOM_SIM7600CE-T
 		Model, _, err := SendCommand(MDMHandler, "AT+CGMM")
 		if err != nil {
 			return "", err
@@ -133,6 +136,7 @@ func SIMCOM_GET(DeviceName string, Key string) (string, error) {
 		}
 		return strings.Replace(Model, "+CGMM: ", "", -1), nil
 	case "CellNetworkRegisterStatus":
+		//+CREG: 2,1,FFFF,FFFFFFF
 		CellNetworkRegister, _, err := SendCommand(MDMHandler, "AT+CREG?")
 		if err != nil {
 			return "", err
@@ -153,6 +157,7 @@ func SIMCOM_GET(DeviceName string, Key string) (string, error) {
 			return "No", nil
 		}
 	case "GetOperatorName":
+		//+COPS: 0,0,"Mi Mobile",7
 		OperatorName, _, err := SendCommand(MDMHandler, "AT+COPS?")
 		if err != nil {
 			return "", err
@@ -165,6 +170,10 @@ func SIMCOM_GET(DeviceName string, Key string) (string, error) {
 		OperatorName = strings.Replace(OperatorName, "\"", "", -1)
 		return OperatorName, nil
 	case "GetOperationMode":
+		//Dual-Line
+		//+CPSI: CDMA,Online,460-03,1019,248,-4.7,-12.8,0,0,-3276.8,14009,65535,6,42414
+		//+CPSI: LTE,Online,460-11,0x2C1C,261237426,269,EUTRAN-BAND3,1850,5,5,-85,-1042,-760,14
+		//
 		OperationMode, _, err := SendCommand(MDMHandler, "AT+CPSI?")
 		if err != nil {
 			return "", err
@@ -172,6 +181,8 @@ func SIMCOM_GET(DeviceName string, Key string) (string, error) {
 		if OperationMode == "" {
 			return "", errors.New("Illegal Response")
 		}
+		OperationModes:=strings.Split(OperationMode,"+CPSI: ")
+		OperationMode=OperationModes[len(OperationModes)-1]
 		OperationMode = strings.Replace(OperationMode, "+CPSI: ", "", -1)
 		OperationMode = strings.Split(OperationMode, ",")[0]
 		return OperationMode, nil
@@ -183,10 +194,13 @@ func SIMCOM_GET(DeviceName string, Key string) (string, error) {
 		if OperationStatus == "" {
 			return "", errors.New("Illegal Response")
 		}
+		OperationStatuss:=strings.Split(OperationStatus,"+CPSI: ")
+		OperationStatus=OperationStatuss[len(OperationStatuss)-1]
 		OperationStatus = strings.Replace(OperationStatus, "+CPSI: ", "", -1)
 		OperationStatus = strings.Split(OperationStatus, ",")[1]
 		return OperationStatus, nil
 	case "SMSStatus":
+		//+CPMS: "ME",0,99,"ME",0,99,"ME",0,99
 		SMSStatus, _, err := SendCommand(MDMHandler, "AT+CPMS?")
 		if err != nil {
 			return "", err
@@ -197,6 +211,7 @@ func SIMCOM_GET(DeviceName string, Key string) (string, error) {
 		SMSStatus = strings.Replace(SMSStatus, "+CPMS: ", "", -1)
 		return SMSStatus, nil
 	case "MessageFormat":
+		//+CMGF: 1
 		MessageFormat, _, err := SendCommand(MDMHandler, "AT+CMGF?")
 		if err != nil {
 			return "", err
@@ -212,6 +227,7 @@ func SIMCOM_GET(DeviceName string, Key string) (string, error) {
 			return "TEXT", nil
 		}
 	case "PhoneNumber":
+		//+CNUM: "","+8617010201799",145
 		PhoneNumber, _, err := SendCommand(MDMHandler, "AT+CNUM")
 		if err != nil {
 			return "", err
@@ -257,6 +273,14 @@ func SIMCOM_SET(DeviceName string, Key string, Value string) (string, error) {
 			return "", err
 		}
 	case "ReadMessage":
+		//PDU
+		//+CMGR: 1,,53
+		//[PDU]
+
+		//TEXT
+		//+CMGR: "REC UNREAD","13800138000","20/01/11,19:33:23+00",,129,14
+		//6D4B8BD5D83CDF1A554A554A554A
+
 		SMSResponse, CmdStatus, err := SendCommand(MDMHandler, fmt.Sprintf("AT+CMGR=%s", Value))
 		if err != nil {
 			return "", err
@@ -283,37 +307,40 @@ func SIMCOM_Get_SMS(DeviceName string) error {
 		}
 	}
 	OperationMode := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string)
-	_, err := SIMCOM_SET(DeviceName, "MessageFormat", "0")
-	if err != nil {
-		return err
+	switch OperationMode{
+	case "EVDO":
+		_,err:=SIMCOM_SET(DeviceName, "MessageFormat", "1")
+		if err != nil {
+			return err
+		}
+	case "CDMA":
+		_,err:=SIMCOM_SET(DeviceName, "MessageFormat", "1")
+		if err != nil {
+			return err
+		}
+	default:
+		_,err:=SIMCOM_SET(DeviceName, "MessageFormat", "0")
+		if err != nil {
+			return err
+		}
 	}
 	for {
 		SMSStatus, err := SIMCOM_GET(DeviceName, "SMSStatus")
 		if err != nil {
 			return err
 		}
-		SMSTotal, _ := strconv.Atoi(strings.Split(SMSStatus, ",")[1])
+		SMSTotal, err := strconv.Atoi(strings.Split(SMSStatus, ",")[1])
+		if err != nil {
+			return err
+		}
 		Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"], err = SIMCOM_GET(DeviceName, "MessageFormat")
 		if err != nil {
 			return err
 		}
 		if SMSTotal != 0 {
-			switch OperationMode {
-			default:
-				err = SIMCOM_Get_SMS_Common(DeviceName)
-				if err != nil {
-					return err
-				}
-			case "CDMA":
-				err = SIMCOM_Get_SMS_CDMA(DeviceName)
-				if err != nil {
-					return err
-				}
-			case "EVDO":
-				err = SIMCOM_Get_SMS_CDMA(DeviceName)
-				if err != nil {
-					return err
-				}
+			err = SIMCOM_Get_SMS_Common(DeviceName)
+			if err != nil {
+				return err
 			}
 		} else {
 			break
@@ -342,13 +369,13 @@ func SIMCOM_Get_SMS_Common(DeviceName string) error {
 		}
 		switch MessageFormat {
 		case "TEXT":
-			err = DecodeText(DeviceName, SMSResponse)
+			err = SIMCOM_RECV_TEXT(DeviceName, SMSResponse)
 			if err != nil {
 				return err
 			}
 		default:
 			PDU := strings.Split(SMSResponse, "\r\n")[1]
-			err = DecodePDU(DeviceName, PDU)
+			err = SIMCOM_RECV_PDU(DeviceName, PDU)
 			if err != nil {
 				return err
 			}
@@ -361,17 +388,88 @@ func SIMCOM_Get_SMS_Common(DeviceName string) error {
 	}
 	return nil
 }
-func SIMCOM_Get_SMS_CDMA(DeviceName string) error {
-	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] != nil {
-		Status := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"].(string)
-		if Status != "ON" && Status != "READY" {
-			return errors.New("Device Not Ready")
-		}
+
+func SIMCOM_RECV_TEXT(DeviceName string,SMSResponse string)error{
+	var PhoneNumber string
+	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"] != nil {
+		PhoneNumber = Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"].(string)
+	} else {
+		PhoneNumber = ""
+	}
+	Arg := strings.Split(SMSResponse, "\r\n")[0]
+	Args := strings.Split(Arg, ",")
+	From := Args[1]
+	To := DeviceName + "@" + PhoneNumber
+	Tittle := From + "->" + To
+	ReceiveTime := time.Now().Format("2006-01-02 15:04:05")
+	SendTime := Args[1] + "-" + Args[2] + "-" + Args[3] + " " + Args[4] + ":" + Args[5] + ":" + Args[6]
+	Body := strings.Split(SMSResponse, "\r\n")[1]
+	Body, _ = u2s(Body)
+	Data := "From:" + From + "\r\n" + "To:" + To + "\r\n" + "Send:" + SendTime + "\r\n" + "Received:" + ReceiveTime + "\r\n" + Body
+	err := DecodeText(DeviceName, Tittle,Data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
+func SIMCOM_RECV_PDU(DeviceName string,PDU string)error{
+	err := DecodePDU(DeviceName, PDU)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 func SIMCOM_SEND_SMS(DeviceName string, DstPhone string, Content string) error {
+	OperationMode := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string)
+	switch OperationMode{
+	case "EVDO":
+		_,err:=SIMCOM_SET(DeviceName, "MessageFormat", "1")
+		if(err!=nil){
+			return err
+		}
+	case "CDMA":
+		_,err:=SIMCOM_SET(DeviceName, "MessageFormat", "1")
+		if(err!=nil){
+			return err
+		}
+	default:
+		_,err:=SIMCOM_SET(DeviceName, "MessageFormat", "0")
+		if(err!=nil){
+			return err
+		}
+	}
+	MessageFormat := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"]
+	switch MessageFormat {
+	case "TEXT":
+		err:=SIMCOM_SEND_SMS_TEXT(DeviceName,DstPhone,Content)
+		if(err!=nil){
+			return err
+		}
+	default:
+		err:=SIMCOM_SEND_SMS_PDU(DeviceName,DstPhone,Content)
+		if(err!=nil){
+			return err
+		}
+	}
+	return nil
+}
+func SIMCOM_SEND_SMS_TEXT(DeviceName string,DstPhone string,Content string) error{
+	_, _, err := DeivceSendCommand(DeviceName, "AT+CMGS=\""+DstPhone+"\"")
+	if err != nil {
+		return err
+	}
+	Response, _, _ := DeivceSendPDU(DeviceName, Content)
+	if strings.Contains(Response, "+CMGS:") {
+		return nil
+	} else {
+		return errors.New("Send Failed")
+	}
+}
+
+func SIMCOM_SEND_SMS_PDU(DeviceName string,DstPhone string,Content string) error{
 	SMS := sms.Message{
 		Text:     Content,
 		Encoding: sms.Encodings.UCS2,

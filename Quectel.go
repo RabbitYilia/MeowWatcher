@@ -8,6 +8,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func Quectel_INIT(DeviceName string) error {
@@ -112,6 +113,7 @@ func Quectel_GET(DeviceName string, Key string) (string, error) {
 	MDMHandler := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MDMPortHandler"].(io.ReadWriteCloser)
 	switch Key {
 	case "HWVersion":
+		//EC20CEFDR02A13M4G
 		HWVersion, _, err := SendCommand(MDMHandler, "AT+CGMR")
 		if err != nil {
 			return "", err
@@ -121,6 +123,7 @@ func Quectel_GET(DeviceName string, Key string) (string, error) {
 		}
 		return strings.Replace(HWVersion, "+CGMR: ", "", -1), nil
 	case "Model":
+		//EC20F
 		Model, _, err := SendCommand(MDMHandler, "AT+CGMM")
 		if err != nil {
 			return "", err
@@ -130,6 +133,7 @@ func Quectel_GET(DeviceName string, Key string) (string, error) {
 		}
 		return strings.Replace(Model, "+CGMM: ", "", -1), nil
 	case "CellNetworkRegisterStatus":
+		//+CREG: 2,1,"FFB9","FFFFFFFF",100
 		CellNetworkRegister, _, err := SendCommand(MDMHandler, "AT+CREG?")
 		if err != nil {
 			return "", err
@@ -150,6 +154,7 @@ func Quectel_GET(DeviceName string, Key string) (string, error) {
 			return "No", nil
 		}
 	case "GetOperatorName":
+		//+COPS: 0,0,"Mi Mobile",7
 		OperatorName, _, err := SendCommand(MDMHandler, "AT+COPS?")
 		if err != nil {
 			return "", err
@@ -162,6 +167,11 @@ func Quectel_GET(DeviceName string, Key string) (string, error) {
 		OperatorName = strings.Replace(OperatorName, "\"", "", -1)
 		return OperatorName, nil
 	case "GetOperationMode":
+		//Dual-Line
+		//
+		//+QNWINFO: "CDMA1X","46003","CDMA BC0",1019
+		//+QNWINFO: "FDD LTE","46011","LTE BAND 3",1850
+		//
 		OperationMode, _, err := SendCommand(MDMHandler, "AT+QNWINFO")
 		if err != nil {
 			return "", err
@@ -169,11 +179,14 @@ func Quectel_GET(DeviceName string, Key string) (string, error) {
 		if OperationMode == "" {
 			return "", errors.New("Illegal Response")
 		}
+		OperationModes:=strings.Split(OperationMode,"+QNWINFO: ")
+		OperationMode=OperationModes[len(OperationModes)-1]
 		OperationMode = strings.Replace(OperationMode, "+QNWINFO: ", "", -1)
 		OperationMode = strings.Split(OperationMode, ",")[0]
 		OperationMode = strings.Replace(OperationMode, "\"", "", -1)
 		return OperationMode, nil
 	case "SMSStatus":
+		//+CPMS: "ME",0,99,"ME",0,99,"ME",0,99
 		SMSStatus, _, err := SendCommand(MDMHandler, "AT+CPMS?")
 		if err != nil {
 			return "", err
@@ -184,6 +197,7 @@ func Quectel_GET(DeviceName string, Key string) (string, error) {
 		SMSStatus = strings.Replace(SMSStatus, "+CPMS: ", "", -1)
 		return SMSStatus, nil
 	case "MessageFormat":
+		//+CMGF: 0
 		MessageFormat, _, err := SendCommand(MDMHandler, "AT+CMGF?")
 		if err != nil {
 			return "", err
@@ -199,6 +213,7 @@ func Quectel_GET(DeviceName string, Key string) (string, error) {
 			return "TEXT", nil
 		}
 	case "PhoneNumber":
+		//+CNUM: ,"+11231234123",145
 		PhoneNumber, _, err := SendCommand(MDMHandler, "AT+CNUM")
 		if err != nil {
 			return "", err
@@ -244,6 +259,13 @@ func Quectel_SET(DeviceName string, Key string, Value string) (string, error) {
 			return "", err
 		}
 	case "ReadMessage":
+		//PDU
+		//+CMGR: 0,,33
+		//[PDU]
+
+		//TEXT
+		//+CMGR: "REC READ","13800138000","20/01/11,19:19:51+00",,129,0,6,14,0,0,0
+		//6D4B8BD5D83CDF1A554A554A554A
 		SMSResponse, CmdStatus, err := SendCommand(MDMHandler, fmt.Sprintf("AT+CMGR=%s", Value))
 		if err != nil {
 			return "", err
@@ -270,12 +292,19 @@ func Quectel_Get_SMS(DeviceName string) error {
 		}
 	}
 	OperationMode := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string)
-	_, err := SIMCOM_SET(DeviceName, "MessageFormat", "0")
-	if err != nil {
-		return err
+	if(strings.Contains(OperationMode,"CDMA")){
+		_, err := Quectel_SET(DeviceName, "MessageFormat", "1")
+		if err != nil {
+			return err
+		}
+	}else{
+		_, err := Quectel_SET(DeviceName, "MessageFormat", "0")
+		if err != nil {
+			return err
+		}
 	}
 	for {
-		SMSStatus, err := SIMCOM_GET(DeviceName, "SMSStatus")
+		SMSStatus, err := Quectel_GET(DeviceName, "SMSStatus")
 		if err != nil {
 			return err
 		}
@@ -288,16 +317,9 @@ func Quectel_Get_SMS(DeviceName string) error {
 			return err
 		}
 		if SMSTotal != 0 {
-			if strings.Contains(OperationMode, "CDMA1X") {
-				err = Quectel_Get_SMS_CDMA(DeviceName)
-				if err != nil {
-					return err
-				}
-			} else {
-				err = Quectel_Get_SMS_Common(DeviceName)
-				if err != nil {
-					return err
-				}
+			err = Quectel_Get_SMS_Common(DeviceName)
+			if err != nil {
+				return err
 			}
 		} else {
 			break
@@ -326,13 +348,13 @@ func Quectel_Get_SMS_Common(DeviceName string) error {
 		}
 		switch MessageFormat {
 		case "TEXT":
-			err = DecodeText(DeviceName, SMSResponse)
+			err = Quectel_RECV_TEXT(DeviceName, SMSResponse)
 			if err != nil {
 				return err
 			}
 		default:
 			PDU := strings.Split(SMSResponse, "\r\n")[1]
-			err = DecodePDU(DeviceName, PDU)
+			err = Quectel_RECV_PDU(DeviceName, PDU)
 			if err != nil {
 				return err
 			}
@@ -345,17 +367,81 @@ func Quectel_Get_SMS_Common(DeviceName string) error {
 	}
 	return nil
 }
-func Quectel_Get_SMS_CDMA(DeviceName string) error {
-	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] != nil {
-		Status := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"].(string)
-		if Status != "ON" && Status != "READY" {
-			return errors.New("Device Not Ready")
+
+func Quectel_SEND_SMS(DeviceName string, DstPhone string, Content string) error {
+	OperationMode := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["OperationMode"].(string)
+	if(strings.Contains(OperationMode,"CDMA1X")){
+		_,err:=Quectel_SET(DeviceName, "MessageFormat", "1")
+		if err != nil {
+			return err
 		}
+	}else{
+		_,err:=Quectel_SET(DeviceName, "MessageFormat", "0")
+		if err != nil {
+			return err
+		}
+	}
+	MessageFormat := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["MessageFormat"]
+	switch MessageFormat {
+	case "TEXT":
+		err:=Quectel_SEND_SMS_TEXT(DeviceName,DstPhone,Content)
+		if(err!=nil){
+			return err
+		}
+	default:
+		err:=Quectel_SEND_SMS_PDU(DeviceName,DstPhone,Content)
+		return err
+	}
+	return nil
+}
+func Quectel_RECV_TEXT(DeviceName string,SMSResponse string)error{
+	var PhoneNumber string
+	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"] != nil {
+		PhoneNumber = Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["PhoneNumber"].(string)
+	} else {
+		PhoneNumber = ""
+	}
+	Arg := strings.Split(SMSResponse, "\r\n")[0]
+	Args := strings.Split(Arg, ",")
+	From := Args[1]
+	To := DeviceName + "@" + PhoneNumber
+	Tittle := From + "->" + To
+	ReceiveTime := time.Now().Format("2006-01-02 15:04:05")
+	SendTime := Args[1] + "-" + Args[2] + "-" + Args[3] + " " + Args[4] + ":" + Args[5] + ":" + Args[6]
+	Body := strings.Split(SMSResponse, "\r\n")[1]
+	Body, _ = u2s(Body)
+	Data := "From:" + From + "\r\n" + "To:" + To + "\r\n" + "Send:" + SendTime + "\r\n" + "Received:" + ReceiveTime + "\r\n" + Body
+	err := DecodeText(DeviceName, Tittle,Data)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func Quectel_SEND_SMS(DeviceName string, DstPhone string, Content string) error {
+
+func Quectel_RECV_PDU(DeviceName string,PDU string)error{
+	err := DecodePDU(DeviceName, PDU)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
+func Quectel_SEND_SMS_TEXT(DeviceName string,DstPhone string,Content string) error{
+	_, _, err := DeivceSendCommand(DeviceName, "AT+CMGS=\""+DstPhone+"\"")
+	if err != nil {
+		return err
+	}
+	Response, _, _ := DeivceSendPDU(DeviceName, Content)
+	if strings.Contains(Response, "+CMGS:") {
+		return nil
+	} else {
+		return errors.New("Send Failed")
+	}
+}
+
+func Quectel_SEND_SMS_PDU(DeviceName string,DstPhone string,Content string) error{
 	SMS := sms.Message{
 		Text:     Content,
 		Encoding: sms.Encodings.UCS2,
@@ -370,16 +456,16 @@ func Quectel_SEND_SMS(DeviceName string, DstPhone string, Content string) error 
 	if Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"] != nil {
 		Status := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"].(string)
 		if Status != "ON" && Status != "READY" {
-			return errors.New("Send Failed")
+			return errors.New("Device Not Ready")
 		}
 	}
 	_, _, err = DeivceSendCommand(DeviceName, "AT+CMGS="+strconv.Itoa(n))
 	if err != nil {
-		return nil
+		return err
 	}
 	Response, _, err := DeivceSendPDU(DeviceName, hexPDU)
 	if err != nil {
-		return nil
+		return err
 	}
 	if strings.Contains(Response, "+CMGS:") {
 		return nil
