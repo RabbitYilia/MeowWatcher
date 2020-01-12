@@ -58,6 +58,8 @@ func SendCommand(Handler io.ReadWriteCloser, Command string) (string, string, er
 		}
 	}
 	ReturnBuffer = strings.Replace(ReturnBuffer, Command+"\r", Command+"\r\n", -1)
+	ReturnBuffer = strings.Replace(ReturnBuffer, "\r\r", "\r", -1)
+	ReturnBuffer = strings.Replace(ReturnBuffer, "\n\n", "\n", -1)
 	ReturnBuffer = strings.Replace(ReturnBuffer, "\r\n\r\n", "\r\n", -1)
 	ReturnBuffer = strings.Replace(ReturnBuffer, Command+"\r\n", "", -1)
 	ReturnBuffer = strings.TrimRight(ReturnBuffer, "\r\n")
@@ -120,6 +122,8 @@ func DeivceSendCommand(DeviceName string, Command string) (string, string, error
 		}
 	}
 	ReturnBuffer = strings.Replace(ReturnBuffer, Command+"\r", Command+"\r\n", -1)
+	ReturnBuffer = strings.Replace(ReturnBuffer, "\r\r", "\r", -1)
+	ReturnBuffer = strings.Replace(ReturnBuffer, "\n\n", "\n", -1)
 	ReturnBuffer = strings.Replace(ReturnBuffer, "\r\n\r\n", "\r\n", -1)
 	ReturnBuffer = strings.Replace(ReturnBuffer, Command+"\r\n", "", -1)
 	ReturnBuffer = strings.TrimRight(ReturnBuffer, "\r\n")

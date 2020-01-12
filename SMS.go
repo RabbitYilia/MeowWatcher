@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func DecodeText(DeviceName string, Tittle string,Data string) error {
+func DecodeText(DeviceName string, Tittle string, Data string) error {
 	log.Println("[", DeviceName, "]", "New SMS:", Tittle, " ", Data)
 	PushSC(DeviceName, Tittle, Data)
 	PushTG(DeviceName, Tittle, Data)

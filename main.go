@@ -20,6 +20,8 @@ func main() {
 		} else {
 			DoOnlineJob()
 		}
+		PrintOnlineDevice()
+		PrintNonOnlineDevice()
 	}
 }
 
@@ -33,7 +35,6 @@ func DoOfflineJob() {
 			DeviceGetSMS(DeviceName)
 		}
 	}
-	log.Println(Config)
 	time.Sleep(time.Second * 5)
 }
 
@@ -53,5 +54,24 @@ func DoOnlineJob() {
 		}
 	default:
 		DoOfflineJob()
+	}
+}
+func PrintOnlineDevice(){
+	log.Println("==OnLine Device==")
+	for DeviceName, _ := range Config["Devices"].(map[string]interface{}) {
+		DeviceStatus := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"]
+		if DeviceStatus == "ON" {
+			log.Println("===[" + DeviceName + "] Online===")
+		}
+	}
+}
+
+func PrintNonOnlineDevice(){
+	log.Println("==No-ONLine Device==")
+	for DeviceName, _ := range Config["Devices"].(map[string]interface{}) {
+		DeviceStatus := Config["Devices"].(map[string]interface{})[DeviceName].(map[string]interface{})["Status"]
+		if DeviceStatus != "ON" {
+			log.Println("===[" + DeviceName + "] ===")
+		}
 	}
 }
